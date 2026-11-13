@@ -13,7 +13,7 @@ Un overlay interactivo, ligero y seguro para Windows 11, diseñado para practica
 *   **🖥️ Overlay Flotante:** Ventana transparente que se superpone al juego. Funciona en "Pantalla completa sin bordes".
 *   **🖱️ Click-Through:** Botón de candado para que los clics del ratón pasen directamente al juego sin molestar.
 *   **🔍 Filtros Avanzados:** Filtra por personaje, dificultad, daño mínimo (con botón rápido 100+), propiedades (Heat, Pared, Counter, Rage, etc.) y estado (Agachado, De pie).
-*   **⭐ Favoritos y ✔️ Aprendidos:** Guarda tus combos favoritos y marca los que ya dominas. Todo se guarda **por personaje** (los favoritos de Kazuya son distintos a los de Jin).
+*   **⭐ Favoritos y ✔️ Aprendidos:** Guarda tus combos favoritos y marca los que ya dominas. Todo se guarda **por personaje**.
 *   **⏱️ Historial de Recientes:** Accede rápidamente a los últimos 10 combos que has practicado.
 *   **✏️ Notas Personales:** Añade un cuadro de texto a cada combo con tus propios trucos o advertencias.
 *   **👁️ Modo Streamer:** Vuelve el fondo del overlay 100% transparente para que tus espectadores solo vean los combos flotando sobre el juego.
@@ -26,7 +26,7 @@ Un overlay interactivo, ligero y seguro para Windows 11, diseñado para practica
 
 ## 🚀 Instalación Rápida (Windows 11)
 
-1.  Ve a la sección de **[Releases](https://github.com/proyectokodi-jpg/tekken8-combo-overlay/releases)** de este repositorio.
+1.  Ve a la sección de **[Releases](https://github.com/ProyectoKodi/tekken8-combo-overlay/releases)** de este repositorio.
 2.  Descarga el último archivo `Tekken8ComboOverlay-Setup-X.X.X.exe`.
 3.  Ejecuta el instalador y sigue las instrucciones (no requiere permisos de administrador).
 4.  Abre Tekken 8 y asegúrate de tenerlo en **"Pantalla completa sin bordes"** (Borderless Windowed) en las opciones gráficas.
@@ -46,11 +46,9 @@ Un overlay interactivo, ligero y seguro para Windows 11, diseñado para practica
 
 ## 🛠️ Para Desarrolladores (Compilar desde cero)
 
-Si quieres modificar el código o compilarlo tú mismo:
-
 ```bash
 # 1. Clona el repositorio
-git clone https://github.com/proyectokodi-jpg/tekken8-combo-overlay.git
+git clone https://github.com/ProyectoKodi/tekken8-combo-overlay.git
 
 # 2. Entra a la carpeta
 cd tekken8-combo-overlay
@@ -66,32 +64,3 @@ npm run dev
 
 # 6. Genera el instalador .exe
 npm run dist
-
-⚠️ Aviso Legal
-Este proyecto es una herramienta de terceros sin afiliación oficial con Bandai Namco. 
-Tekken 8 es una marca registrada de sus respectivos dueños. La aplicación no inyecta código, 
-no lee la memoria del juego ni automatiza inputs, por lo que es 100% segura frente a los sistemas anti-cheat.
-
-
-
-MIT License
-
-Copyright (c) 2026 proyectokodi
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
