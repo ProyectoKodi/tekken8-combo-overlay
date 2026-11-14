@@ -1,4 +1,4 @@
-# 🥋 Tekken 8 Combo Overlay Pro (Ver. 3.03.01)
+# 🥋 Tekken 8 Combo Overlay Pro (Ver. 3.3.1)
 
 Un overlay interactivo, ligero y seguro para Windows 11, diseñado para practicar combos de Tekken 8 mientras juegas. Extrae los combos directamente de la web de Kage y los muestra con la notación visual oficial, sin inyectar código en el juego (100% libre de baneos).
 
@@ -9,20 +9,20 @@ Un overlay interactivo, ligero y seguro para Windows 11, diseñado para practica
 ## ✨ Características Principales
 
 *   **📚 Base de Datos de Combos:** Extrae automáticamente más de 2,000 combos desde [Kage Website](https://tekken8combo.kagewebsite.com/).
-*   **🎨 Notación Visual:** Convierte texto (`d/f,2`) en los iconos oficiales del juego (flechas y botones de PlayStation).
+*   **🎨 Notación Visual:** Convierte texto (`d/f,2`) en los iconos oficiales del juego.
 *   **🖥️ Overlay Flotante:** Ventana transparente que se superpone al juego. Funciona en "Pantalla completa sin bordes".
-*   **🖱️ Click-Through:** Botón de candado para que los clics del ratón pasen directamente al juego sin molestar.
-*   **🔍 Filtros Avanzados:** Filtra por personaje, dificultad, daño mínimo (con botón rápido 100+), propiedades (Heat, Pared, Counter, Rage, etc.) y estado (Agachado, De pie).
+*   **🖱️ Click-Through:** Botón de candado para que los clics del ratón pasen directamente al juego.
+*   **🔍 Filtros Avanzados:** Filtra por personaje, dificultad, daño mínimo, propiedades (Heat, Pared, Counter) y estado.
 *   **⭐ Favoritos y ✔️ Aprendidos:** Guarda tus combos favoritos y marca los que ya dominas. Todo se guarda **por personaje**.
-*   **⏱️ Historial de Recientes:** Accede rápidamente a los últimos 10 combos que has practicado.
-*   **✏️ Notas Personales:** Añade un cuadro de texto a cada combo con tus propios trucos o advertencias.
-*   **👁️ Modo Streamer:** Vuelve el fondo del overlay 100% transparente para que tus espectadores solo vean los combos flotando sobre el juego.
-*   **🏆 Modo Torneo:** Oculta todos los botones de edición para una experiencia limpia y profesional.
-*   **🌍 Multiidioma:** Soporte nativo para Español, Inglés y Portugués.
-*   **🎨 Temas de Color:** Cambia el color de acento de la interfaz (Dorado, Azul, Rojo, Verde, Rosa).
-*   **📏 Modo Compacto:** Oculta la barra de búsqueda y filtros para dejar solo la lista de combos.
+*   **⏱️ Historial de Recientes:** Accede rápidamente a los últimos 10 combos practicados.
+*   **✏️ Notas Personales:** Añade un cuadro de texto a cada combo con tus propios trucos.
+*   **👁️ Modo Streamer:** Vuelve el fondo del overlay 100% transparente.
+*   **🏆 Modo Torneo:** Oculta todos los botones de edición.
+*   **🌍 Multiidioma:** Español, Inglés y Portugués.
+*   **🎨 Temas de Color:** Dorado, Azul, Rojo, Verde, Rosa.
+*   **📏 Modo Compacto:** Oculta la barra de búsqueda y filtros.
 *   **🔄 Actualización Automática:** La app detecta nuevas versiones y se actualiza sola.
-*   **📤 Exportar/Importar:** Haz copias de seguridad de tus perfiles completos (favoritos, notas y combos personalizados) para pasárselos a un amigo.
+*   **📤 Exportar/Importar:** Haz copias de seguridad de tus perfiles completos.
 
 ## 🚀 Instalación Rápida (Windows 11)
 
@@ -32,17 +32,28 @@ Un overlay interactivo, ligero y seguro para Windows 11, diseñado para practica
 4.  Abre Tekken 8 y asegúrate de tenerlo en **"Pantalla completa sin bordes"** (Borderless Windowed) en las opciones gráficas.
 5.  Abre el overlay desde el menú Inicio y ¡a practicar!
 
-## 🎮 Controles del Overlay
+## 🎮 Controles y Atajos de Teclado
 
-| Acción | Tecla / Botón |
+Puedes usar el ratón para navegar por la interfaz, pero también tienes **atajos de teclado** para no soltar el mando:
+
+| Tecla | Acción |
 | :--- | :--- |
-| Abrir / Cerrar Overlay | **F9** |
-| Colapsar / Expandir | **F10** |
-| Navegar por la lista | Ratón |
-| Abrir Modo Práctica | Clic en cualquier combo |
-| Bloquear Ratón | Botón 🔒/🔓 (Candado) |
-| Modo Enfoque / Compacto | Botones 🎯 y 📏 |
-| Cambiar de Idioma | Menú desplegable en la barra superior |
+| **F9** | Mostrar / Ocultar el Overlay por completo. |
+| **F10** | Colapsar / Expandir la ventana a su mínima expresión. |
+| **F8** | **Bloquear / Desbloquear el ratón.** Si el candado está cerrado, los clics pasan al juego. Pulsa F8 para recuperar el ratón. |
+| **F1** | Abrir rápidamente el formulario para **Añadir un Combo**. |
+| **F3** | Alternar el **Modo Streamer** (fondo transparente). |
+
+**Controles con el ratón (Haz clic en el icono ❓ dentro de la app para ver esta guía):**
+*   **🔒/🔓 (Candado):** Bloquear/desbloquear clics.
+*   **👁️ (Ojo):** Modo Streamer.
+*   **🏆 (Trofeo):** Modo Torneo.
+*   **📏 (Regla):** Modo Compacto.
+*   **⭐ (Estrella):** Añadir a favoritos.
+*   **○ / ✔:** Marcar como combo aprendido.
+*   **📋:** Copiar la notación.
+*   **💬:** Copiar el combo para Discord.
+*   **✏️:** Añadir una nota personal.
 
 ## 🛠️ Para Desarrolladores (Compilar desde cero)
 
