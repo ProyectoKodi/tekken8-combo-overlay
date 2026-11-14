@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "T8 Combos",
+    "search_char": "Buscar personaje...",
+    "search_combo": "Buscar combos de {{char}}...",
+    "back": "← Volver",
+    "combos": "combos",
+    "settings": "Ajustes"
+  },
+  "actions": {
+    "sync": "↻ Sync todo",
+    "export": "⬇ Exp",
+    "import": "⬆ Imp",
+    "recent": "🕒 Recientes",
+    "focus": "🎯 Enfoque",
+    "add": "+ Añadir",
+    "reload": "↻ Recargar",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "copy": "📋 Copiar",
+    "copied": "¡Copiado!",
+    "practice": "▶ Practicar",
+    "delete": "Eliminar",
+    "restart": "↺ Reiniciar",
+    "prev": "◀ Anterior",
+    "next": "Siguiente ▶"
+  },
+  "filters": {
+    "favorites": "★ Favs",
+    "dmg_100": "💥 100+",
+    "min_dmg": "Daño ≥",
+    "all_difficulty": "Toda dificultad",
+    "easy": "Fácil",
+    "medium": "Media",
+    "hard": "Difícil",
+    "sort": "Orden",
+    "sort_default": "Orden original",
+    "sort_damage": "Mayor daño",
+    "sort_hits": "Más golpes",
+    "clear": "Limpiar",
+    "tags": {
+      "Heat": "Heat",
+      "Wall": "Pared",
+      "Rage": "Rage",
+      "CH": "Counter",
+      "Crouch": "Agachado",
+      "Standing": "De pie",
+      "No Wall": "Sin pared"
+    }
+  },
+  "labels": {
+    "damage": "DAÑO",
+    "hits": "GOLPES",
+    "situational": "⚠️ SITUACIONAL",
+    "new": "NUEVO",
+    "by": "por",
+    "no_combos": "No hay combos",
+    "no_combos_hint": "Prueba a quitar algunos filtros",
+    "load_error": "No se pudieron cargar los combos",
+    "retry": "Reintentar",
+    "loading": "Cargando...",
+    "practice_mode": "Modo práctica",
+    "select_char": "Selecciona un personaje",
+    "no_notation": "Sin notación"
+  },
+  "help": {
+    "title": "Guía de Uso Rápido",
+    "hotkeys_title": "⌨️ Atajos de Teclado (Hotkeys)",
+    "hotkey_f8": "Bloquear / Desbloquear el ratón (Click-Through).",
+    "hotkey_f9": "Mostrar / Ocultar el Overlay.",
+    "hotkey_f10": "Colapsar / Expandir la ventana.",
+    "hotkey_f1": "Abrir el formulario para añadir un combo.",
+    "hotkey_f3": "Alternar el Modo Streamer (fondo transparente).",
+    "ui_title": "🖱️ Controles de la Interfaz",
+    "ui_lock": "Candado: Bloquea el ratón para que los clics pasen al juego.",
+    "ui_eye": "Ojo: Modo Streamer (fondo transparente para tus espectadores).",
+    "ui_trophy": "Trofeo: Modo Torneo (oculta los botones de edición).",
+    "ui_ruler": "Regla: Modo Compacto (oculta menús para dejar solo la lista).",
+    "ui_note": "Lápiz: Añade una nota personal a un combo.",
+    "ui_close": "Entendido, cerrar guía"
+  }
+}

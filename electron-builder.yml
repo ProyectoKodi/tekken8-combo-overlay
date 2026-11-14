@@ -1,0 +1,23 @@
+appId: com.tekken8overlay.app
+productName: Tekken 8 Combo Overlay
+directories:
+  output: dist
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+extraResources:
+  - from: resources/yt-dlp.exe
+    to: yt-dlp.exe
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Tekken 8 Combo Overlay
+  artifactName: Tekken8ComboOverlay-Setup-${version}.exe

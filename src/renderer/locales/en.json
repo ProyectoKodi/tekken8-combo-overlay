@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "T8 Combos",
+    "search_char": "Search character...",
+    "search_combo": "Search {{char}} combos...",
+    "back": "← Back",
+    "combos": "combos",
+    "settings": "Settings"
+  },
+  "actions": {
+    "sync": "↻ Sync all",
+    "export": "⬇ Exp",
+    "import": "⬆ Imp",
+    "recent": "🕒 Recent",
+    "focus": "🎯 Focus",
+    "add": "+ Add",
+    "reload": "↻ Reload",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "copy": "📋 Copy",
+    "copied": "Copied!",
+    "practice": "▶ Practice",
+    "delete": "Delete",
+    "restart": "↺ Restart",
+    "prev": "◀ Prev",
+    "next": "Next ▶"
+  },
+  "filters": {
+    "favorites": "★ Favs",
+    "dmg_100": "💥 100+",
+    "min_dmg": "Dmg ≥",
+    "all_difficulty": "All difficulties",
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "sort": "Sort",
+    "sort_default": "Default order",
+    "sort_damage": "Highest damage",
+    "sort_hits": "Most hits",
+    "clear": "Clear",
+    "tags": {
+      "Heat": "Heat",
+      "Wall": "Wall",
+      "Rage": "Rage",
+      "CH": "Counter",
+      "Crouch": "Crouch",
+      "Standing": "Standing",
+      "No Wall": "No Wall"
+    }
+  },
+  "labels": {
+    "damage": "DMG",
+    "hits": "HITS",
+    "situational": "⚠️ SITUATIONAL",
+    "new": "NEW",
+    "by": "by",
+    "no_combos": "No combos found",
+    "no_combos_hint": "Try removing some filters",
+    "load_error": "Failed to load combos",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "practice_mode": "Practice mode",
+    "select_char": "Select a character",
+    "no_notation": "No notation"
+  },
+  "help": {
+    "title": "Quick User Guide",
+    "hotkeys_title": "⌨️ Keyboard Shortcuts (Hotkeys)",
+    "hotkey_f8": "Lock / Unlock mouse (Click-Through).",
+    "hotkey_f9": "Show / Hide the Overlay.",
+    "hotkey_f10": "Collapse / Expand the window.",
+    "hotkey_f1": "Open the form to add a combo.",
+    "hotkey_f3": "Toggle Streamer Mode (transparent background).",
+    "ui_title": "🖱️ Interface Controls",
+    "ui_lock": "Lock icon: Blocks the mouse so clicks go to the game.",
+    "ui_eye": "Eye icon: Streamer Mode (transparent background for viewers).",
+    "ui_trophy": "Trophy icon: Tournament Mode (hides editing buttons).",
+    "ui_ruler": "Ruler icon: Compact Mode (hides menus leaving only the list).",
+    "ui_note": "Pencil icon: Add a personal note to a combo.",
+    "ui_close": "Got it, close guide"
+  }
+}
