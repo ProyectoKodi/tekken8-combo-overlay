@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dependencies
 node_modules/
 
@@ -33,3 +34,23 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+=======
+# Dependencias
+node_modules/
+
+# Compilados
+dist/
+out/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Variables de entorno
+.env
+.env.local
+>>>>>>> 5a681d02bdca7da2749d3a36ce8bd66154b92f21
