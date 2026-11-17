@@ -79,5 +79,15 @@
     "ui_ruler": "Régua: Modo Compacto (oculta menus deixando apenas a lista).",
     "ui_note": "Lápis: Adiciona uma nota pessoal a um combo.",
     "ui_close": "Entendi, fechar guia"
+  },
+  "rank": {
+    "title": "Editar Perfil",
+    "official_ranking": "Ranking Oficial",
+    "save": "Salvar",
+    "points": "Pontos...",
+    "tekken_id": "Tekken ID...",
+    "editor": "Editor",
+    "export_custom": "⬇ Custom",
+    "import_custom": "⬆ Custom"
   }
 }

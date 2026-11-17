@@ -79,5 +79,15 @@
     "ui_ruler": "Ruler icon: Compact Mode (hides menus leaving only the list).",
     "ui_note": "Pencil icon: Add a personal note to a combo.",
     "ui_close": "Got it, close guide"
+  },
+  "rank": {
+    "title": "Edit Profile",
+    "official_ranking": "Official Ranking",
+    "save": "Save",
+    "points": "Points...",
+    "tekken_id": "Tekken ID...",
+    "editor": "Editor",
+    "export_custom": "⬇ Custom",
+    "import_custom": "⬆ Custom"
   }
 }

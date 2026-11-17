@@ -1,13 +1,25 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useOverlayStore } from '../store/overlayStore'
 
 const RANGOS = ["Beginner", "1st Dan", "2nd Dan", "Trainee", "Brawler", "Ranger", "Warrior", "Assailant", "Dominator", "Eliminator", "Challenger", "Revenger", "Destroyer", "Fujin", "Raijin", "Kishin", "Bushin", "Tekken King", "Tekken Supreme", "God of Destruction"]
 const PERSONAJES = ["Heihachi", "Kazuya", "Jin", "Jun", "Paul", "Law", "King", "Jack-8", "Lars", "Xiaoyu", "Nina", "Leroy", "Asuka", "Hwoarang", "Bryan", "Claudio", "Azucena", "Raven", "Yoshimitsu", "Shaheen", "Steve", "Sergei", "Leo", "Victor", "Reina", "Eddy"]
 
-const RankTracker: React.FC = () => {
-  const { tekkenId, setTekkenId, rankData, setRankData } = useOverlayStore()
+interface RankTrackerProps {
+  compact?: boolean
+}
+
+const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
+  const { tekkenId, setTekkenId, rankData, setRankData, t } = useOverlayStore()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(rankData || { playerName: tekkenId || '', rank: 'Warrior', points: '0', mainChar: 'Heihachi' })
+
+  useEffect(() => {
+    if (rankData) {
+      setFormData(rankData)
+    } else if (tekkenId) {
+      setFormData(prev => ({ ...prev, playerName: tekkenId }))
+    }
+  }, [rankData, tekkenId])
 
   const handleSave = () => {
     setTekkenId(formData.playerName)
@@ -15,22 +27,33 @@ const RankTracker: React.FC = () => {
     setIsEditing(false)
   }
 
-  const selectStyle = "bg-neutral-900 text-white p-1 rounded border border-overlay-accent/30 outline-none w-full text-xs";
-  const inputStyle = "bg-neutral-900 border border-overlay-accent/30 rounded px-2 py-1 text-white text-xs w-full";
+  const selectStyle = "bg-neutral-900 text-white p-1 rounded border border-overlay-accent/30 outline-none w-full text-xs"
+  const inputStyle = "bg-neutral-900 border border-overlay-accent/30 rounded px-2 py-1 text-white text-xs w-full"
 
   if (isEditing) {
     return (
       <div className="flex flex-col gap-2 p-3 bg-black/95 border border-overlay-accent rounded-lg no-drag cursor-default z-50 w-60 text-white text-xs font-hud">
-        <h3 className="font-bold text-overlay-accent uppercase mb-1">Editar Perfil</h3>
-        <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder="Tekken ID..." className={inputStyle} />
+        <h3 className="font-bold text-overlay-accent uppercase mb-1">{t('rank.title')}</h3>
+        <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder={t('rank.tekken_id')} className={inputStyle} />
         <select value={formData.rank} onChange={(e) => setFormData({...formData, rank: e.target.value})} className={selectStyle}>
             {RANGOS.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
         </select>
         <select value={formData.mainChar} onChange={(e) => setFormData({...formData, mainChar: e.target.value})} className={selectStyle}>
             {PERSONAJES.map(p => <option key={p} value={p} className="bg-neutral-900">{p}</option>)}
         </select>
-        <input type="number" value={formData.points} onChange={(e) => setFormData({...formData, points: e.target.value})} placeholder="Puntos..." className={inputStyle} />
-        <button onClick={handleSave} className="text-black font-bold uppercase cursor-pointer mt-2 bg-overlay-accent p-2 rounded hover:bg-white transition-colors">Guardar</button>
+        <input type="number" value={formData.points} onChange={(e) => setFormData({...formData, points: e.target.value})} placeholder={t('rank.points')} className={inputStyle} />
+        <button onClick={handleSave} className="text-black font-bold uppercase cursor-pointer mt-2 bg-overlay-accent p-2 rounded hover:bg-white transition-colors">{t('rank.save')}</button>
+      </div>
+    )
+  }
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2 bg-black/80 border border-overlay-accent/30 rounded px-2 py-1 text-xs font-hud no-drag cursor-pointer" onClick={() => setIsEditing(true)}>
+        <span className="text-overlay-accent font-bold truncate max-w-[80px]">{rankData?.playerName || tekkenId || 'PLAYER'}</span>
+        <span className="text-white/40">|</span>
+        <span className="text-white/80 text-[10px]">{rankData?.rank || 'Warrior'}</span>
+        <span className="text-overlay-accent text-[10px]">({rankData?.points || '0'} PTS)</span>
       </div>
     )
   }
@@ -50,7 +73,7 @@ const RankTracker: React.FC = () => {
 
         {/* Banner Central - Rango/Puntos */}
         <div className="flex flex-col items-center justify-center px-4 border-l border-white/10 h-full bg-black/20">
-            <span className="text-[8px] text-white/40 uppercase tracking-widest mb-1">Ranking Oficial</span>
+            <span className="text-[8px] text-white/40 uppercase tracking-widest mb-1">{t('rank.official_ranking')}</span>
             <div className="text-[12px] font-hud font-bold bg-overlay-accent/20 text-overlay-accent px-3 py-1 rounded border border-overlay-accent/50 uppercase tracking-wider mb-1">
                 {rankData?.rank || 'Warrior'}
             </div>
@@ -60,7 +83,7 @@ const RankTracker: React.FC = () => {
         </div>
 
         {/* Botón Editor en esquina */}
-        <button onClick={() => setIsEditing(true)} className="absolute top-2 right-2 text-[8px] font-hud text-white/30 hover:text-overlay-accent uppercase">Editor</button>
+        <button onClick={() => setIsEditing(true)} className="absolute top-2 right-2 text-[8px] font-hud text-white/30 hover:text-overlay-accent uppercase">{t('rank.editor')}</button>
     </div>
   )
 }
