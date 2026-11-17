@@ -9,15 +9,26 @@ interface RankTrackerProps {
 }
 
 const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
-  const { tekkenId, setTekkenId, rankData, setRankData, fetchOnlineRankData, t } = useOverlayStore()
+  const { tekkenId, setTekkenId, rankData, setRankData, incrementWin, incrementLoss, resetSession, fetchOnlineRankData, t } = useOverlayStore()
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState(rankData || { playerName: tekkenId || '', rank: 'Warrior', points: '0', mainChar: 'Heihachi' })
+  const [formData, setFormData] = useState(rankData || {
+    playerName: tekkenId || 'SpringanVnzla',
+    tekkenIdCode: '2MJ4-GEqa-Dqrj',
+    rank: 'God of Destruction',
+    points: '248183',
+    glicko: 'μ 1327',
+    prowess: '248.183',
+    region: 'Americas',
+    mainChar: 'Victor',
+    wins: 0,
+    losses: 0
+  })
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
 
   useEffect(() => {
     if (rankData) {
-      setFormData(rankData)
+      setFormData(prev => ({ ...prev, ...rankData }))
     } else if (tekkenId) {
       setFormData(prev => ({ ...prev, playerName: tekkenId }))
     }
@@ -30,48 +41,83 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
   }
 
   const handleSyncOnline = async () => {
-    const idToSearch = formData.playerName || tekkenId
+    const idToSearch = formData.tekkenIdCode || formData.playerName || tekkenId
     if (!idToSearch) {
       setSyncMsg('Introduce un ID')
       setTimeout(() => setSyncMsg(''), 3000)
       return
     }
     setSyncing(true)
-    setSyncMsg('Buscando...')
+    setSyncMsg('Sincronizando...')
     try {
-      setTekkenId(idToSearch)
       await fetchOnlineRankData(idToSearch)
-      setSyncMsg('¡Sincronizado!')
-      setIsEditing(false)
-      setTimeout(() => setSyncMsg(''), 3000)
-    } catch (err) {
-      setSyncMsg('No encontrado')
-      setTimeout(() => setSyncMsg(''), 3000)
-    } finally {
       setSyncing(false)
+      setSyncMsg('¡Actualizado!')
+      setTimeout(() => setSyncMsg(''), 3000)
+    } catch {
+      setSyncing(false)
+      setSyncMsg('Modo manual / Guardado')
+      setTimeout(() => setSyncMsg(''), 3000)
     }
   }
 
-  const selectStyle = "bg-neutral-900 text-white p-1 rounded border border-overlay-accent/30 outline-none w-full text-xs"
-  const inputStyle = "bg-neutral-900 border border-overlay-accent/30 rounded px-2 py-1 text-white text-xs w-full"
+  const totalMatches = (rankData?.wins ?? formData.wins ?? 0) + (rankData?.losses ?? formData.losses ?? 0)
+  const winRate = totalMatches > 0 ? Math.round(((rankData?.wins ?? formData.wins ?? 0) / totalMatches) * 100) : 0
+
+  const selectStyle = "bg-neutral-900 text-white p-1.5 rounded border border-overlay-accent/30 outline-none w-full text-xs"
+  const inputStyle = "bg-neutral-900 border border-overlay-accent/30 rounded px-2 py-1.5 text-white text-xs w-full"
 
   if (isEditing) {
     return (
-      <div className="flex flex-col gap-2 p-3 bg-black/95 border border-overlay-accent rounded-lg no-drag cursor-default z-50 w-60 text-white text-xs font-hud">
-        <h3 className="font-bold text-overlay-accent uppercase mb-1">{t('rank.title')}</h3>
-        <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder={t('rank.tekken_id')} className={inputStyle} />
-        <select value={formData.rank} onChange={(e) => setFormData({...formData, rank: e.target.value})} className={selectStyle}>
-            {RANGOS.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
-        </select>
-        <select value={formData.mainChar} onChange={(e) => setFormData({...formData, mainChar: e.target.value})} className={selectStyle}>
-            {PERSONAJES.map(p => <option key={p} value={p} className="bg-neutral-900">{p}</option>)}
-        </select>
-        <input type="number" value={formData.points} onChange={(e) => setFormData({...formData, points: e.target.value})} placeholder={t('rank.points')} className={inputStyle} />
+      <div className="flex flex-col gap-2 p-3 bg-black/95 border border-overlay-accent rounded-lg no-drag cursor-default z-50 w-72 text-white text-xs font-hud shadow-2xl">
+        <div className="flex justify-between items-center mb-1">
+          <h3 className="font-bold text-overlay-accent uppercase">⚙️ EWGF.gg Profile Editor</h3>
+          <button onClick={() => setIsEditing(false)} className="text-white/40 hover:text-white">✕</button>
+        </div>
+        <div className="flex flex-col gap-1.5 max-h-[350px] overflow-y-auto pr-1">
+          <label className="text-[10px] text-white/50">Player Name</label>
+          <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder="SpringanVnzla" className={inputStyle} />
 
-        <div className="flex gap-1 mt-2">
-          <button onClick={handleSave} className="flex-1 text-black font-bold uppercase cursor-pointer bg-overlay-accent p-2 rounded hover:bg-white transition-colors text-[10px]">{t('rank.save')}</button>
-          <button onClick={handleSyncOnline} disabled={syncing} className="flex-1 text-white font-bold uppercase cursor-pointer bg-sky-600 p-2 rounded hover:bg-sky-500 transition-colors text-[10px] disabled:opacity-50" title="Buscar en Wavu Wank / EWGF">
-            {syncing ? 'Sync...' : '🔄 Online'}
+          <label className="text-[10px] text-white/50">Tekken ID Code</label>
+          <input type="text" value={formData.tekkenIdCode} onChange={(e) => setFormData({...formData, tekkenIdCode: e.target.value})} placeholder="2MJ4-GEqa-Dqrj" className={inputStyle} />
+
+          <label className="text-[10px] text-white/50">Rank</label>
+          <select value={formData.rank} onChange={(e) => setFormData({...formData, rank: e.target.value})} className={selectStyle}>
+              {RANGOS.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
+          </select>
+
+          <label className="text-[10px] text-white/50">Main Character</label>
+          <select value={formData.mainChar} onChange={(e) => setFormData({...formData, mainChar: e.target.value})} className={selectStyle}>
+              {PERSONAJES.map(p => <option key={p} value={p} className="bg-neutral-900">{p}</option>)}
+          </select>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-white/50">Glicko (μ)</label>
+              <input type="text" value={formData.glicko} onChange={(e) => setFormData({...formData, glicko: e.target.value})} placeholder="μ 1327" className={inputStyle} />
+            </div>
+            <div>
+              <label className="text-[10px] text-white/50">Tekken Prowess</label>
+              <input type="text" value={formData.prowess} onChange={(e) => setFormData({...formData, prowess: e.target.value})} placeholder="248.183" className={inputStyle} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-white/50">Region</label>
+              <input type="text" value={formData.region} onChange={(e) => setFormData({...formData, region: e.target.value})} placeholder="Americas" className={inputStyle} />
+            </div>
+            <div>
+              <label className="text-[10px] text-white/50">Points</label>
+              <input type="text" value={formData.points} onChange={(e) => setFormData({...formData, points: e.target.value})} placeholder="248183" className={inputStyle} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-1.5 mt-2">
+          <button onClick={handleSave} className="flex-1 text-black font-bold uppercase cursor-pointer bg-overlay-accent p-2 rounded hover:bg-white transition-colors text-[10px]">Guardar</button>
+          <button onClick={handleSyncOnline} disabled={syncing} className="flex-1 text-white font-bold uppercase cursor-pointer bg-sky-600 p-2 rounded hover:bg-sky-500 transition-colors text-[10px] disabled:opacity-50">
+            {syncing ? 'Sync...' : '🔄 Web Sync'}
           </button>
         </div>
         {syncMsg && <div className="text-center text-[10px] text-amber-400 mt-1">{syncMsg}</div>}
@@ -81,45 +127,71 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-2 bg-black/80 border border-overlay-accent/30 rounded px-2 py-1 text-xs font-hud no-drag cursor-pointer" onClick={() => setIsEditing(true)}>
-        <span className="text-overlay-accent font-bold truncate max-w-[80px]">{rankData?.playerName || tekkenId || 'PLAYER'}</span>
-        <span className="text-white/40">|</span>
-        <span className="text-white/80 text-[10px]">{rankData?.rank || 'Warrior'}</span>
-        <span className="text-overlay-accent text-[10px]">({rankData?.points || '0'} PTS)</span>
+      <div className="flex items-center justify-between bg-black/90 border border-overlay-accent/40 rounded px-3 py-1.5 text-xs font-hud no-drag cursor-pointer shadow-lg" onClick={() => setIsEditing(true)}>
+        <div className="flex items-center gap-2">
+          <span className="text-overlay-accent font-bold">{rankData?.playerName || formData.playerName || 'Player'}</span>
+          <span className="text-white/30">|</span>
+          <span className="text-white/80 font-semibold">{rankData?.rank || formData.rank || 'Warrior'}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-sky-400 font-bold">{rankData?.glicko || formData.glicko || 'μ 1327'}</span>
+          <span className="text-emerald-400 text-[10px] font-bold">W:{rankData?.wins ?? 0} L:{rankData?.losses ?? 0} ({winRate}%)</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="relative bg-gradient-to-r from-black/90 to-black/60 border border-overlay-accent/30 rounded-lg p-0 backdrop-blur-md w-full no-drag overflow-hidden shadow-2xl flex items-center h-24">
-        {/* Banner Izquierdo - Texto */}
-        <div className="flex-1 p-4 flex flex-col justify-center">
-            <span className="text-[10px] font-hud text-white/50 uppercase tracking-widest">{tekkenId || 'PLAYER'}</span>
-            <div className="text-[20px] font-hud font-black text-white uppercase italic tracking-wider leading-none shadow-black drop-shadow-md">
-                {rankData?.playerName || formData.playerName || 'NAME'}
+    <div className="relative bg-gradient-to-r from-[#0d1117] via-[#161b22] to-[#0d1117] border border-overlay-accent/40 rounded-xl p-3 backdrop-blur-md w-full no-drag overflow-hidden shadow-2xl flex items-center justify-between h-28 text-white font-hud">
+
+        {/* Izquierda: Avatar / Glicko badge */}
+        <div className="flex items-center gap-3">
+          <div className="relative w-16 h-16 rounded-lg bg-neutral-800 border border-overlay-accent/30 overflow-hidden flex items-center justify-center shadow-inner">
+            <span className="text-2xl font-black text-overlay-accent uppercase">{formData.mainChar?.[0] || 'T'}</span>
+            <div className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] text-center text-emerald-400 font-bold py-0.5 px-1 border-t border-white/10">
+              {rankData?.glicko || formData.glicko || 'μ 1327'}
             </div>
-            <div className="text-[12px] font-hud font-bold text-overlay-accent uppercase tracking-wider">
-                {rankData?.mainChar || 'Character'}
+          </div>
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center gap-2">
+              <span className="text-[16px] font-black uppercase tracking-wide text-white drop-shadow">{rankData?.playerName || formData.playerName}</span>
+              <span className="text-[9px] bg-white/10 text-white/70 px-1.5 py-0.5 rounded tracking-wider">{rankData?.region || formData.region || 'Americas'}</span>
+            </div>
+            <div className="text-[10px] text-white/50 tracking-wider flex items-center gap-1.5 mt-0.5">
+              <span>{rankData?.tekkenIdCode || formData.tekkenIdCode}</span>
+              <span className="text-overlay-accent font-semibold">• Main: {rankData?.mainChar || formData.mainChar}</span>
+            </div>
+            {/* Wins / Losses quick counter */}
+            <div className="flex items-center gap-2 mt-1.5 text-[10px]">
+              <span className="text-emerald-400 font-bold">W: {rankData?.wins ?? 0}</span>
+              <button onClick={(e) => { e.stopPropagation(); incrementWin(); }} className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 px-1 rounded text-[9px]">+</button>
+              <span className="text-rose-400 font-bold ml-1">L: {rankData?.losses ?? 0}</span>
+              <button onClick={(e) => { e.stopPropagation(); incrementLoss(); }} className="bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 px-1 rounded text-[9px]">+</button>
+              <span className="text-white/40 ml-1">({winRate}% WR)</span>
+              <button onClick={(e) => { e.stopPropagation(); resetSession(); }} className="text-white/30 hover:text-white/70 text-[8px] ml-1" title="Reset W/L">↺</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Derecha: Rango y Tekken Prowess (Estilo EWGF.gg) */}
+        <div className="flex flex-col items-end justify-center pr-2">
+            <div className="text-[13px] font-black text-amber-400 uppercase tracking-widest italic drop-shadow-lg text-right max-w-[200px] truncate">
+                {rankData?.rank || formData.rank || 'God of Destruction'}
+            </div>
+            <div className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">
+                Tekken Prowess
+            </div>
+            <div className="text-[13px] font-bold text-overlay-accent tracking-widest">
+                {rankData?.prowess || formData.prowess || '248.183'}
             </div>
         </div>
 
-        {/* Banner Central - Rango/Puntos */}
-        <div className="flex flex-col items-center justify-center px-4 border-l border-white/10 h-full bg-black/20">
-            <span className="text-[8px] text-white/40 uppercase tracking-widest mb-1">{t('rank.official_ranking')}</span>
-            <div className="text-[12px] font-hud font-bold bg-overlay-accent/20 text-overlay-accent px-3 py-1 rounded border border-overlay-accent/50 uppercase tracking-wider mb-1">
-                {rankData?.rank || 'Warrior'}
-            </div>
-            <div className="text-[10px] font-hud text-white tracking-widest font-bold">
-                {rankData?.points || '0'} PTS
-            </div>
-        </div>
-
-        {/* Botones en esquina */}
-        <div className="absolute top-2 right-2 flex items-center gap-2">
-          <button onClick={handleSyncOnline} disabled={syncing} className="text-[8px] font-hud text-sky-400 hover:text-sky-300 uppercase bg-sky-950/60 px-1.5 py-0.5 rounded border border-sky-500/30" title="Sincronizar online con Wavu Wank / EWGF">
+        {/* Botones flotantes esquina superior derecha */}
+        <div className="absolute top-2 right-2 flex items-center gap-1.5">
+          <button onClick={handleSyncOnline} disabled={syncing} className="text-[8px] font-hud text-sky-400 hover:text-sky-300 uppercase bg-sky-950/60 px-1.5 py-0.5 rounded border border-sky-500/30" title="Sincronizar online">
             {syncing ? '...' : '🔄 Sync'}
           </button>
-          <button onClick={() => setIsEditing(true)} className="text-[8px] font-hud text-white/30 hover:text-overlay-accent uppercase">{t('rank.editor')}</button>
+          <button onClick={() => setIsEditing(true)} className="text-[8px] font-hud text-white/40 hover:text-overlay-accent uppercase bg-black/40 px-1.5 py-0.5 rounded border border-white/10">⚙️</button>
         </div>
     </div>
   )
