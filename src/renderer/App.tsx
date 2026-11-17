@@ -1,18 +1,16 @@
-import { useEffect, useState, lazy, Suspense } from 'react'
+import { useEffect, useState } from 'react'
 import { useOverlayStore } from './store/overlayStore'
 import WindowControls from './components/WindowControls'
 import SearchBar from './components/SearchBar'
+import CharacterSelector from './components/CharacterSelector'
+import FilterBar from './components/FilterBar'
+import ComboList from './components/ComboList'
+import ComboListHorizontal from './components/ComboListHorizontal'
+import PracticeView from './components/PracticeView'
+import AddComboForm from './components/AddComboForm'
 import SyncAllButton from './components/SyncAllButton'
 import UpdateBanner from './components/UpdateBanner'
 import RankTracker from './components/RankTracker'
-
-// Componentes cargados de forma diferida (Lazy Loading)
-const CharacterSelectorLazy = lazy(() => import('./components/CharacterSelector'))
-const FilterBarLazy = lazy(() => import('./components/FilterBar'))
-const ComboListLazy = lazy(() => import('./components/ComboList'))
-const ComboListHorizontalLazy = lazy(() => import('./components/ComboListHorizontal'))
-const PracticeViewLazy = lazy(() => import('./components/PracticeView'))
-const AddComboFormLazy = lazy(() => import('./components/AddComboForm'))
 
 const isPracticeMode = new URLSearchParams(window.location.search).get('mode') === 'practice'
 
@@ -21,7 +19,7 @@ export default function App() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
 
-  if (isPracticeMode) return <Suspense fallback={<div className="h-full flex items-center justify-center text-white/20 text-xs">Cargando práctica...</div>}><PracticeViewLazy /></Suspense>
+  if (isPracticeMode) return <PracticeView />
 
   useEffect(() => { const unlisten = window.electronAPI.onHotkeyToggle(() => toggleCollapse()); return () => { if (typeof unlisten === 'function') unlisten() } }, [toggleCollapse])
   useEffect(() => { loadFavorites() }, [loadFavorites])
@@ -54,8 +52,8 @@ export default function App() {
            {isFocusMode && <div className="flex-1 text-right no-drag"><RankTracker compact /></div>}
            <WindowControls compact />
         </div>
-        {selectedCharacter && !isFocusMode && <div className="border-b border-white/5 bg-black/40"><Suspense fallback={null}><FilterBarLazy compact /></Suspense></div>}
-        {selectedCharacter ? <Suspense fallback={<div className="flex-1 flex items-center justify-center text-white/20">Cargando...</div>}><ComboListHorizontalLazy /></Suspense> : <div className="flex-1 flex items-center justify-center"><p className="text-white/30 text-xs font-hud">{t('labels.select_char')}</p></div>}
+        {selectedCharacter && !isFocusMode && <div className="border-b border-white/5 bg-black/40"><FilterBar compact /></div>}
+        {selectedCharacter ? <ComboListHorizontal /> : <div className="flex-1 flex items-center justify-center"><p className="text-white/30 text-xs font-hud">{t('labels.select_char')}</p></div>}
       </div>
     )
   }
@@ -92,18 +90,14 @@ export default function App() {
             </div>
           )}
 
-          {!isFocusMode && !isCompactMode && <Suspense fallback={null}><FilterBarLazy /></Suspense>}
-          <Suspense fallback={<div className="flex-1 flex items-center justify-center text-white/20">Cargando lista...</div>}><ComboListLazy /></Suspense>
+          {!isFocusMode && !isCompactMode && <FilterBar />}
+          <ComboList />
         </>
       ) : (
-        <Suspense fallback={<div className="flex-1 flex items-center justify-center text-white/20">Cargando selección...</div>}><CharacterSelectorLazy /></Suspense>
+        <CharacterSelector />
       )}
 
-      {showAdd && (
-        <Suspense fallback={null}>
-          <AddComboFormLazy onClose={() => setShowAdd(false)} onSaved={() => useOverlayStore.getState().refreshCombos()} />
-        </Suspense>
-      )}
+      {showAdd && <AddComboForm onClose={() => setShowAdd(false)} onSaved={() => useOverlayStore.getState().refreshCombos()} />}
     </div>
   )
 }
