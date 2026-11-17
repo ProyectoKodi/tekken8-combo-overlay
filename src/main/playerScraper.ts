@@ -10,7 +10,7 @@ export async function fetchPlayerStatsFromWeb(tekkenId: string) {
     const res = await fetch(`https://wank.wavu.wiki/search?q=${encodedId}&_format=json`, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'Tekken8ComboOverlay/3.3.1'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       }
     })
 
@@ -50,13 +50,18 @@ export async function fetchPlayerStatsWithApiKey(apiKey: string, tekkenId?: stri
     throw new Error('Introduce una API Key válida de EWGF.gg')
   }
 
+  const cleanKey = apiKey.trim()
+
   try {
-    const res = await fetch(`https://www.ewgf.gg/api/user` + (tekkenId ? `?q=${encodeURIComponent(tekkenId)}` : ''), {
+    const url = `https://www.ewgf.gg/api/user` + (tekkenId ? `?q=${encodeURIComponent(tekkenId)}&api_key=${encodeURIComponent(cleanKey)}` : `?api_key=${encodeURIComponent(cleanKey)}`)
+
+    const res = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${apiKey.trim()}`,
-        'X-API-Key': apiKey.trim(),
-        'Accept': 'application/json',
-        'User-Agent': 'Tekken8ComboOverlay/3.3.1'
+        'Authorization': `Bearer ${cleanKey}`,
+        'X-API-Key': cleanKey,
+        'Accept': 'application/json, text/plain, */*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.ewgf.gg/'
       }
     })
 
