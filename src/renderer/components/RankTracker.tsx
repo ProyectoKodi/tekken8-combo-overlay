@@ -9,7 +9,7 @@ interface RankTrackerProps {
 }
 
 const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
-  const { tekkenId, setTekkenId, rankData, setRankData, incrementWin, incrementLoss, resetSession, t } = useOverlayStore()
+  const { tekkenId, setTekkenId, rankData, setRankData, incrementWin, incrementLoss, resetSession, fetchOnlineRankData, t } = useOverlayStore()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(rankData || {
     playerName: tekkenId || 'SpringanVnzla',
@@ -23,6 +23,8 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
     wins: 0,
     losses: 0
   })
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState('')
 
   useEffect(() => {
     if (rankData) {
@@ -38,6 +40,27 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
     setIsEditing(false)
   }
 
+  const handleSyncOnline = async () => {
+    const idToSearch = formData.tekkenIdCode || formData.playerName || tekkenId
+    if (!idToSearch) {
+      setSyncMsg('Introduce un ID')
+      setTimeout(() => setSyncMsg(''), 3000)
+      return
+    }
+    setSyncing(true)
+    setSyncMsg('Consultando Wavu API...')
+    try {
+      await fetchOnlineRankData(idToSearch)
+      setSyncing(false)
+      setSyncMsg('¡Sincronizado con Wavu!')
+      setTimeout(() => setSyncMsg(''), 3000)
+    } catch {
+      setSyncing(false)
+      setSyncMsg('No hallado en API (Usa Guardar)')
+      setTimeout(() => setSyncMsg(''), 3000)
+    }
+  }
+
   const totalMatches = (rankData?.wins ?? formData.wins ?? 0) + (rankData?.losses ?? formData.losses ?? 0)
   const winRate = totalMatches > 0 ? Math.round(((rankData?.wins ?? formData.wins ?? 0) / totalMatches) * 100) : 0
 
@@ -48,13 +71,13 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
     return (
       <div className="flex flex-col gap-2 p-3 bg-black/95 border border-overlay-accent rounded-lg no-drag cursor-default z-50 w-72 text-white text-xs font-hud shadow-2xl">
         <div className="flex justify-between items-center mb-1">
-          <h3 className="font-bold text-overlay-accent uppercase">⚙️ EWGF.gg Profile Editor</h3>
+          <h3 className="font-bold text-overlay-accent uppercase">⚙️ EWGF / Wavu Profile Editor</h3>
           <button onClick={() => setIsEditing(false)} className="text-white/40 hover:text-white">✕</button>
         </div>
-        <p className="text-[9px] text-white/50 mb-1">Copia los datos de tu perfil de EWGF.gg para mostrarlos en el overlay:</p>
+        <p className="text-[9px] text-white/50 mb-1">Usa Web Sync para consultar la API de Wavu Wank (`?_format=json`) o guarda manual:</p>
 
-        <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto pr-1">
-          <label className="text-[10px] text-white/50">Player Name</label>
+        <div className="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto pr-1">
+          <label className="text-[10px] text-white/50">Player Name / Tekken ID</label>
           <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder="SpringanVnzla" className={inputStyle} />
 
           <label className="text-[10px] text-white/50">Tekken ID Code</label>
@@ -80,20 +103,15 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
               <input type="text" value={formData.prowess} onChange={(e) => setFormData({...formData, prowess: e.target.value})} placeholder="248.183" className={inputStyle} />
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] text-white/50">Region</label>
-              <input type="text" value={formData.region} onChange={(e) => setFormData({...formData, region: e.target.value})} placeholder="Americas" className={inputStyle} />
-            </div>
-            <div>
-              <label className="text-[10px] text-white/50">Points</label>
-              <input type="text" value={formData.points} onChange={(e) => setFormData({...formData, points: e.target.value})} placeholder="245856" className={inputStyle} />
-            </div>
-          </div>
         </div>
 
-        <button onClick={handleSave} className="w-full text-black font-bold uppercase cursor-pointer bg-overlay-accent p-2.5 rounded hover:bg-white transition-colors text-[11px] mt-2">Guardar y Aplicar</button>
+        <div className="flex gap-1.5 mt-2">
+          <button onClick={handleSave} className="flex-1 text-black font-bold uppercase cursor-pointer bg-overlay-accent p-2 rounded hover:bg-white transition-colors text-[10px]">Guardar</button>
+          <button onClick={handleSyncOnline} disabled={syncing} className="flex-1 text-white font-bold uppercase cursor-pointer bg-sky-600 p-2 rounded hover:bg-sky-500 transition-colors text-[10px] disabled:opacity-50">
+            {syncing ? 'Sync...' : '🔄 Web Sync'}
+          </button>
+        </div>
+        {syncMsg && <div className="text-center text-[10px] text-amber-400 mt-1">{syncMsg}</div>}
       </div>
     )
   }
@@ -146,7 +164,7 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
           </div>
         </div>
 
-        {/* Derecha: Rango y Tekken Prowess (Estilo EWGF.gg) */}
+        {/* Derecha: Rango y Tekken Prowess (Estilo EWGF.gg / Wavu) */}
         <div className="flex flex-col items-end justify-center pr-2">
             <div className="text-[13px] font-black text-amber-400 uppercase tracking-widest italic drop-shadow-lg text-right max-w-[200px] truncate">
                 {rankData?.rank || formData.rank || 'God of Destruction'}
