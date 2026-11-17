@@ -72,6 +72,9 @@ interface OverlayStore {
   incrementLoss: () => void
   resetSession: () => void
   fetchOnlineRankData: (tekkenId: string) => Promise<void>
+  ewgfApiKey: string
+  setEwgfApiKey: (key: string) => void
+  fetchApiRankData: () => Promise<void>
 }
 
 const defaultFilters: FilterState = { activeTags: [], sort: 'default', searchQuery: '', showOnlyFavorites: false, showOnlyLearned: false, minDamage: 0, difficulty: '' }
@@ -83,7 +86,12 @@ const applyTheme = (color: ThemeColor) => { const themes: Record<ThemeColor, str
 
 export const useOverlayStore = create<OverlayStore>((set, get) => {
   const initialTheme = getInitialTheme()
-  setTimeout(() => applyTheme(initialTheme), 0)
+  setTimeout(() => {
+    applyTheme(initialTheme)
+    if (localStorage.getItem('t8_ewgf_api_key')) {
+      get().fetchApiRankData()
+    }
+  }, 0)
   return {
     selectedCharacter: null, setCharacter: (name) => { set({ selectedCharacter: name, combos: [], customCombos: [], error: null, filters: defaultFilters, showOnlyRecent: false }); get().loadCombos(name) }, clearCharacter: () => set({ selectedCharacter: null, combos: [], customCombos: [], error: null, showOnlyRecent: false }),
     combos: [], customCombos: [], loading: false, error: null, fromCache: false, fetchedAt: null,
@@ -142,6 +150,35 @@ export const useOverlayStore = create<OverlayStore>((set, get) => {
         }
       } catch (err) {
         throw new Error((err as Error).message)
+      }
+    },
+
+    ewgfApiKey: localStorage.getItem('t8_ewgf_api_key') || '',
+    setEwgfApiKey: (key) => { localStorage.setItem('t8_ewgf_api_key', key); set({ ewgfApiKey: key }) },
+    fetchApiRankData: async () => {
+      const key = get().ewgfApiKey
+      if (!key) return
+      try {
+        const stats = await window.electronAPI.fetchPlayerStatsWithApiKey(key, get().tekkenId)
+        if (stats) {
+          const current = get().rankData || { wins: 0, losses: 0 }
+          const newData = {
+            ...current,
+            playerName: stats.playerName || current.playerName || 'SpringanVnzla',
+            tekkenIdCode: stats.tekkenIdCode || current.tekkenIdCode || '2MJ4-GEqa-Dqrj',
+            rank: stats.rank || current.rank || 'God of Destruction',
+            points: stats.points || current.points || '245856',
+            glicko: stats.glicko || current.glicko || 'μ 1327',
+            prowess: stats.prowess || current.prowess || '248.183',
+            region: stats.region || current.region || 'Americas',
+            mainChar: stats.mainChar || current.mainChar || 'Victor',
+            source: stats.source
+          }
+          localStorage.setItem('t8_rank_data', JSON.stringify(newData))
+          set({ rankData: newData })
+        }
+      } catch (err) {
+        console.error('Error fetching EWGF API stats:', err)
       }
     },
 

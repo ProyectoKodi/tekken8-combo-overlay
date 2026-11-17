@@ -39,6 +39,7 @@ declare global {
       setAutoLaunch: (enable: boolean) => Promise<boolean>
 
       fetchPlayerStats: (tekkenId: string) => Promise<any>
+      fetchPlayerStatsWithApiKey: (apiKey: string, tekkenId?: string) => Promise<any>
 
       onHotkeyToggle: (cb: () => void) => () => void
       onHorizontalChanged: (cb: (isHorizontal: boolean) => void) => () => void

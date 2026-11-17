@@ -10,7 +10,7 @@ import { CHARACTER_NAMES, CHARACTER_SLUGS } from '../renderer/types/combo'
 import { openPracticeWindow, registerPracticeIpc } from './practiceWindow'
 import { getFavorites, isFavorite, addFavorite, removeFavorite } from './favorites'
 import { comboHash } from '../shared/comboHash'
-import { fetchPlayerStatsFromWeb } from './playerScraper'
+import { fetchPlayerStatsFromWeb, fetchPlayerStatsWithApiKey } from './playerScraper'
 import Store from 'electron-store'
 import type { Combo } from '../renderer/types/combo'
 
@@ -154,4 +154,5 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('get-auto-launch', () => app.getLoginItemSettings().openAtLogin)
   ipcMain.handle('set-auto-launch', (_, enable: boolean) => { app.setLoginItemSettings({ openAtLogin: enable, args: ['--hidden'] }); return enable })
   ipcMain.handle('fetch-player-stats', (_, tekkenId: string) => fetchPlayerStatsFromWeb(tekkenId))
+  ipcMain.handle('fetch-player-stats-api-key', (_, { apiKey, tekkenId }) => fetchPlayerStatsWithApiKey(apiKey, tekkenId))
 }

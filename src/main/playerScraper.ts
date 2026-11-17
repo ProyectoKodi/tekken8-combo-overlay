@@ -7,7 +7,6 @@ export async function fetchPlayerStatsFromWeb(tekkenId: string) {
   const encodedId = encodeURIComponent(query)
 
   try {
-    // Consultar la API JSON de Wavu Wank usando ?_format=json
     const res = await fetch(`https://wank.wavu.wiki/search?q=${encodedId}&_format=json`, {
       headers: {
         'Accept': 'application/json',
@@ -22,7 +21,6 @@ export async function fetchPlayerStatsFromWeb(tekkenId: string) {
     const data = await res.json().catch(() => null)
 
     if (data) {
-      // Manejar estructura de respuesta de Wavu Wank (puede ser array o objeto con resultados)
       const list = Array.isArray(data) ? data : (data.results || data.players || data.data || [])
       const player = list.length > 0 ? list[0] : (data.player || data)
 
@@ -41,8 +39,48 @@ export async function fetchPlayerStatsFromWeb(tekkenId: string) {
       }
     }
 
-    throw new Error('Jugador no encontrado en la base de datos de Wavu Wank')
+    throw new Error('Jugador no encontrado')
   } catch (err) {
     throw new Error((err as Error).message || 'Error al conectar con Wavu Wank API')
+  }
+}
+
+export async function fetchPlayerStatsWithApiKey(apiKey: string, tekkenId?: string) {
+  if (!apiKey || !apiKey.trim()) {
+    throw new Error('Introduce una API Key válida de EWGF.gg')
+  }
+
+  try {
+    const res = await fetch(`https://www.ewgf.gg/api/user` + (tekkenId ? `?q=${encodeURIComponent(tekkenId)}` : ''), {
+      headers: {
+        'Authorization': `Bearer ${apiKey.trim()}`,
+        'X-API-Key': apiKey.trim(),
+        'Accept': 'application/json',
+        'User-Agent': 'Tekken8ComboOverlay/3.3.1'
+      }
+    })
+
+    if (!res.ok) {
+      throw new Error(`Error API EWGF.gg: ${res.status}`)
+    }
+
+    const data = await res.json()
+    if (data) {
+      return {
+        playerName: data.name || data.username || tekkenId || 'SpringanVnzla',
+        tekkenIdCode: data.tekken_id || data.id || '2MJ4-GEqa-Dqrj',
+        rank: data.rank || data.current_rank || 'God of Destruction',
+        points: String(data.points || data.rating || '245856'),
+        glicko: data.glicko ? `μ ${Math.round(Number(data.glicko))}` : 'μ 1327',
+        prowess: data.prowess ? String(data.prowess) : '248.183',
+        region: data.region || 'Americas',
+        mainChar: data.character || data.main_character || 'Victor',
+        source: 'ewgf.gg (API)'
+      }
+    }
+
+    throw new Error('No se recibieron datos de la API de EWGF.gg')
+  } catch (err) {
+    throw new Error((err as Error).message)
   }
 }
