@@ -37,6 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPendingPracticeCombo: () => ipcRenderer.invoke('get-pending-practice-combo'),
   getAutoLaunch: () => ipcRenderer.invoke('get-auto-launch'),
   setAutoLaunch: (enable: boolean) => ipcRenderer.invoke('set-auto-launch', enable),
+  fetchPlayerStats: (tekkenId: string) => ipcRenderer.invoke('fetch-player-stats', tekkenId),
   
   // Hotkeys
   onHotkeyToggle: (cb: () => void) => { ipcRenderer.on('hotkey-toggle', cb); return () => ipcRenderer.removeListener('hotkey-toggle', cb) },

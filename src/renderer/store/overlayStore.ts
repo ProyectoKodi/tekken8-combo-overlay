@@ -71,6 +71,7 @@ interface OverlayStore {
   incrementWin: () => void
   incrementLoss: () => void
   resetSession: () => void
+  fetchOnlineRankData: (tekkenId: string) => Promise<void>
 }
 
 const defaultFilters: FilterState = { activeTags: [], sort: 'default', searchQuery: '', showOnlyFavorites: false, showOnlyLearned: false, minDamage: 0, difficulty: '' }
@@ -121,6 +122,28 @@ export const useOverlayStore = create<OverlayStore>((set, get) => {
         localStorage.setItem('t8_rank_data', JSON.stringify(newData));
         return { rankData: newData };
     }),
+    fetchOnlineRankData: async (tekkenId) => {
+      try {
+        const stats = await window.electronAPI.fetchPlayerStats(tekkenId)
+        if (stats) {
+          const current = get().rankData || { wins: 0, losses: 0 }
+          const newData = {
+            playerName: stats.playerName || tekkenId,
+            rank: stats.rank || 'Warrior',
+            points: stats.points || '1500',
+            mainChar: stats.mainChar || 'Heihachi',
+            wins: current.wins || 0,
+            losses: current.losses || 0,
+            source: stats.source
+          }
+          localStorage.setItem('t8_rank_data', JSON.stringify(newData))
+          localStorage.setItem('t8_tekken_id', tekkenId)
+          set({ rankData: newData, tekkenId })
+        }
+      } catch (err) {
+        throw new Error((err as Error).message)
+      }
+    },
 
     filters: defaultFilters, setFilter: (patch) => set((s) => ({ filters: { ...s.filters, ...patch } })), toggleTag: (tag) => set((s) => { const active = s.filters.activeTags; const next = active.includes(tag) ? active.filter((t) => t !== tag) : [...active, tag]; return { filters: { ...s.filters, activeTags: next } } }), clearFilters: () => set({ filters: defaultFilters }),
     filteredCombos: () => {

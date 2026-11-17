@@ -9,9 +9,11 @@ interface RankTrackerProps {
 }
 
 const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
-  const { tekkenId, setTekkenId, rankData, setRankData, t } = useOverlayStore()
+  const { tekkenId, setTekkenId, rankData, setRankData, fetchOnlineRankData, t } = useOverlayStore()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(rankData || { playerName: tekkenId || '', rank: 'Warrior', points: '0', mainChar: 'Heihachi' })
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState('')
 
   useEffect(() => {
     if (rankData) {
@@ -25,6 +27,29 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
     setTekkenId(formData.playerName)
     setRankData(formData)
     setIsEditing(false)
+  }
+
+  const handleSyncOnline = async () => {
+    const idToSearch = formData.playerName || tekkenId
+    if (!idToSearch) {
+      setSyncMsg('Introduce un ID')
+      setTimeout(() => setSyncMsg(''), 3000)
+      return
+    }
+    setSyncing(true)
+    setSyncMsg('Buscando...')
+    try {
+      setTekkenId(idToSearch)
+      await fetchOnlineRankData(idToSearch)
+      setSyncMsg('¡Sincronizado!')
+      setIsEditing(false)
+      setTimeout(() => setSyncMsg(''), 3000)
+    } catch (err) {
+      setSyncMsg('No encontrado')
+      setTimeout(() => setSyncMsg(''), 3000)
+    } finally {
+      setSyncing(false)
+    }
   }
 
   const selectStyle = "bg-neutral-900 text-white p-1 rounded border border-overlay-accent/30 outline-none w-full text-xs"
@@ -42,7 +67,14 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
             {PERSONAJES.map(p => <option key={p} value={p} className="bg-neutral-900">{p}</option>)}
         </select>
         <input type="number" value={formData.points} onChange={(e) => setFormData({...formData, points: e.target.value})} placeholder={t('rank.points')} className={inputStyle} />
-        <button onClick={handleSave} className="text-black font-bold uppercase cursor-pointer mt-2 bg-overlay-accent p-2 rounded hover:bg-white transition-colors">{t('rank.save')}</button>
+
+        <div className="flex gap-1 mt-2">
+          <button onClick={handleSave} className="flex-1 text-black font-bold uppercase cursor-pointer bg-overlay-accent p-2 rounded hover:bg-white transition-colors text-[10px]">{t('rank.save')}</button>
+          <button onClick={handleSyncOnline} disabled={syncing} className="flex-1 text-white font-bold uppercase cursor-pointer bg-sky-600 p-2 rounded hover:bg-sky-500 transition-colors text-[10px] disabled:opacity-50" title="Buscar en Wavu Wank / EWGF">
+            {syncing ? 'Sync...' : '🔄 Online'}
+          </button>
+        </div>
+        {syncMsg && <div className="text-center text-[10px] text-amber-400 mt-1">{syncMsg}</div>}
       </div>
     )
   }
@@ -64,7 +96,7 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
         <div className="flex-1 p-4 flex flex-col justify-center">
             <span className="text-[10px] font-hud text-white/50 uppercase tracking-widest">{tekkenId || 'PLAYER'}</span>
             <div className="text-[20px] font-hud font-black text-white uppercase italic tracking-wider leading-none shadow-black drop-shadow-md">
-                {formData.playerName || 'NAME'}
+                {rankData?.playerName || formData.playerName || 'NAME'}
             </div>
             <div className="text-[12px] font-hud font-bold text-overlay-accent uppercase tracking-wider">
                 {rankData?.mainChar || 'Character'}
@@ -82,8 +114,13 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
             </div>
         </div>
 
-        {/* Botón Editor en esquina */}
-        <button onClick={() => setIsEditing(true)} className="absolute top-2 right-2 text-[8px] font-hud text-white/30 hover:text-overlay-accent uppercase">{t('rank.editor')}</button>
+        {/* Botones en esquina */}
+        <div className="absolute top-2 right-2 flex items-center gap-2">
+          <button onClick={handleSyncOnline} disabled={syncing} className="text-[8px] font-hud text-sky-400 hover:text-sky-300 uppercase bg-sky-950/60 px-1.5 py-0.5 rounded border border-sky-500/30" title="Sincronizar online con Wavu Wank / EWGF">
+            {syncing ? '...' : '🔄 Sync'}
+          </button>
+          <button onClick={() => setIsEditing(true)} className="text-[8px] font-hud text-white/30 hover:text-overlay-accent uppercase">{t('rank.editor')}</button>
+        </div>
     </div>
   )
 }
