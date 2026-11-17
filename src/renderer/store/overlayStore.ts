@@ -18,6 +18,12 @@ interface OverlayStore {
   fetchedAt: number | null
   loadCombos: (character: string) => Promise<void>
   refreshCombos: () => Promise<void>
+  // NUEVO v3.4.0: Importar/Exportar combos
+  exportCustomCombos: () => string
+  importCustomCombos: (jsonString: string) => Promise<void>
+  // NUEVO v3.4.0: Layout Editor
+  isEditingLayout: boolean
+  toggleEditingLayout: () => void
   filters: FilterState
   setFilter: (patch: Partial<FilterState>) => void
   toggleTag: (tag: string) => void
@@ -58,12 +64,20 @@ interface OverlayStore {
   toggleTournamentMode: () => void
   isStreamerMode: boolean
   toggleStreamerMode: () => void
+  tekkenId: string
+  setTekkenId: (id: string) => void
+  rankData: { playerName: string, points: string, rank: string, mainChar: string, wins: number, losses: number } | null
+  setRankData: (data: any) => void
+  incrementWin: () => void
+  incrementLoss: () => void
+  resetSession: () => void
 }
 
 const defaultFilters: FilterState = { activeTags: [], sort: 'default', searchQuery: '', showOnlyFavorites: false, showOnlyLearned: false, minDamage: 0, difficulty: '' }
 const getInitialRecent = (): Combo[] => { try { const saved = localStorage.getItem('t8_recent_combos'); return saved ? JSON.parse(saved) : [] } catch { return [] } }
 const getInitialTheme = (): ThemeColor => { try { return (localStorage.getItem('t8_theme') as ThemeColor) || 'dorado' } catch { return 'dorado' } }
 const getInitialLang = (): Language => { try { return (localStorage.getItem('t8_lang') as Language) || 'es' } catch { return 'es' } }
+const getInitialRankData = (): any => { try { const saved = localStorage.getItem('t8_rank_data'); return saved ? JSON.parse(saved) : null } catch { return null } }
 const applyTheme = (color: ThemeColor) => { const themes: Record<ThemeColor, string> = { dorado: '#fbbf24', azul: '#38bdf8', rojo: '#ef4444', verde: '#4ade80', rosa: '#f472b6' }; document.documentElement.style.setProperty('--accent-color', themes[color]); localStorage.setItem('t8_theme', color) }
 
 export const useOverlayStore = create<OverlayStore>((set, get) => {
@@ -74,10 +88,40 @@ export const useOverlayStore = create<OverlayStore>((set, get) => {
     combos: [], customCombos: [], loading: false, error: null, fromCache: false, fetchedAt: null,
     loadCombos: async (character) => {
       set({ loading: true, error: null })
-      try { const result = await window.electronAPI.fetchCombos(character); const custom = await window.electronAPI.getCustomCombos(character); const learned = await window.electronAPI.getLearnedCombos(); set({ combos: result.combos, customCombos: custom ?? [], learnedIds: new Set(learned), fromCache: result.fromCache, fetchedAt: result.fetchedAt ?? Date.now(), loading: false }) } 
+      try { const result = await window.electronAPI.fetchCombos(character); const custom = await window.electronAPI.getCustomCombos(character); const learned = await window.electronAPI.getLearnedCombos(); set({ combos: result.combos, customCombos: custom ?? [], learnedIds: new Set(learned), fromCache: result.fromCache, fetchedAt: result.fetchedAt ?? Date.now(), loading: false }) }
       catch (err) { set({ error: (err as Error).message, loading: false }) }
     },
     refreshCombos: async () => { const char = get().selectedCharacter; if (!char) return; await window.electronAPI.clearCache(char); await get().loadCombos(char) },
+
+    exportCustomCombos: () => { return JSON.stringify(get().customCombos, null, 2) },
+    importCustomCombos: async (jsonString: string) => { try { const importedCombos = JSON.parse(jsonString) as Combo[]; const char = get().selectedCharacter; if (!char) throw new Error("No hay personaje seleccionado"); await window.electronAPI.saveCustomCombos(char, importedCombos); await get().loadCombos(char) } catch (err) { throw new Error("Error al importar combos: " + (err as Error).message) } },
+
+    isEditingLayout: false,
+    toggleEditingLayout: () => set((s) => ({ isEditingLayout: !s.isEditingLayout })),
+
+    tekkenId: localStorage.getItem('t8_tekken_id') || '',
+    setTekkenId: (id) => { localStorage.setItem('t8_tekken_id', id); set({ tekkenId: id }) },
+    rankData: getInitialRankData(),
+    setRankData: (data) => { localStorage.setItem('t8_rank_data', JSON.stringify(data)); set({ rankData: data }) },
+    incrementWin: () => set((s) => {
+        if (!s.rankData) return s;
+        const newData = { ...s.rankData, wins: (s.rankData.wins || 0) + 1 };
+        localStorage.setItem('t8_rank_data', JSON.stringify(newData));
+        return { rankData: newData };
+    }),
+    incrementLoss: () => set((s) => {
+        if (!s.rankData) return s;
+        const newData = { ...s.rankData, losses: (s.rankData.losses || 0) + 1 };
+        localStorage.setItem('t8_rank_data', JSON.stringify(newData));
+        return { rankData: newData };
+    }),
+    resetSession: () => set((s) => {
+        if (!s.rankData) return s;
+        const newData = { ...s.rankData, wins: 0, losses: 0 };
+        localStorage.setItem('t8_rank_data', JSON.stringify(newData));
+        return { rankData: newData };
+    }),
+
     filters: defaultFilters, setFilter: (patch) => set((s) => ({ filters: { ...s.filters, ...patch } })), toggleTag: (tag) => set((s) => { const active = s.filters.activeTags; const next = active.includes(tag) ? active.filter((t) => t !== tag) : [...active, tag]; return { filters: { ...s.filters, activeTags: next } } }), clearFilters: () => set({ filters: defaultFilters }),
     filteredCombos: () => {
       const { combos, customCombos, filters, favoriteIds, learnedIds, showOnlyRecent, recentCombos } = get()
@@ -98,15 +142,11 @@ export const useOverlayStore = create<OverlayStore>((set, get) => {
     collapsed: false, toggleCollapse: () => { set((s) => ({ collapsed: !s.collapsed })); window.electronAPI.toggleCollapse() }, isHorizontal: false, setHorizontal: (v) => set({ isHorizontal: v }), opacity: 1, setOpacity: (v) => { set({ opacity: v }); window.electronAPI.setOpacity(v) },
     recentCombos: getInitialRecent(), showOnlyRecent: false, setShowOnlyRecent: (val) => set({ showOnlyRecent: val }), addRecentCombo: (combo) => { set((s) => { const filtered = s.recentCombos.filter(c => c.id !== combo.id); const newRecent = [combo, ...filtered].slice(0, 10); localStorage.setItem('t8_recent_combos', JSON.stringify(newRecent)); return { recentCombos: newRecent } }) },
     isFocusMode: false, toggleFocusMode: () => set((s) => ({ isFocusMode: !s.isFocusMode })), themeColor: initialTheme, setThemeColor: (color) => { applyTheme(color); set({ themeColor: color }) }, dynamicCharacters: null, loadDynamicCharacters: async () => { try { const chars = await window.electronAPI.getDynamicCharacters(); if (chars && Object.keys(chars).length > 0) set({ dynamicCharacters: chars }) } catch (e) {} }, language: getInitialLang(), setLanguage: (lang) => { localStorage.setItem('t8_lang', lang); set({ language: lang }) }, t: (path, params) => getTranslation(get().language, path, params),
-    
-    isClickThrough: false, 
-    // Ahora solo PIDE el cambio, el proceso main es quien decide y avisa de vuelta
-    toggleClickThrough: () => { 
-      window.electronAPI.toggleClickThrough() 
-    },
-    // Esta función la usa el App.tsx cuando recibe el aviso del proceso main
-    setClickThrough: (val: boolean) => set({ isClickThrough: val }), 
-    
+
+    isClickThrough: false,
+    toggleClickThrough: () => { window.electronAPI.toggleClickThrough() },
+    setClickThrough: (val: boolean) => set({ isClickThrough: val }),
+
     isCompactMode: false, toggleCompactMode: () => set((s) => ({ isCompactMode: !s.isCompactMode })),
     isTournamentMode: false, toggleTournamentMode: () => set((s) => ({ isTournamentMode: !s.isTournamentMode })),
     isStreamerMode: false, toggleStreamerMode: () => set((s) => ({ isStreamerMode: !s.isStreamerMode })),

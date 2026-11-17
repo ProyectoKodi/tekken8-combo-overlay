@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { useOverlayStore } from './store/overlayStore'
 import WindowControls from './components/WindowControls'
 import SearchBar from './components/SearchBar'
-import CharacterSelector from './components/CharacterSelector'
-import FilterBar from './components/FilterBar'
-import ComboList from './components/ComboList'
-import ComboListHorizontal from './components/ComboListHorizontal'
-import PracticeView from './components/PracticeView'
-import AddComboForm from './components/AddComboForm'
 import SyncAllButton from './components/SyncAllButton'
 import UpdateBanner from './components/UpdateBanner'
+import RankTracker from './components/RankTracker'
+
+// Componentes cargados de forma diferida (Lazy Loading)
+const CharacterSelectorLazy = lazy(() => import('./components/CharacterSelector'))
+const FilterBarLazy = lazy(() => import('./components/FilterBar'))
+const ComboListLazy = lazy(() => import('./components/ComboList'))
+const ComboListHorizontalLazy = lazy(() => import('./components/ComboListHorizontal'))
+const PracticeViewLazy = lazy(() => import('./components/PracticeView'))
+const AddComboFormLazy = lazy(() => import('./components/AddComboForm'))
 
 const isPracticeMode = new URLSearchParams(window.location.search).get('mode') === 'practice'
 
@@ -18,13 +21,12 @@ export default function App() {
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [showAdd, setShowAdd] = useState(false)
 
-  if (isPracticeMode) return <PracticeView />
+  if (isPracticeMode) return <Suspense fallback={<div className="h-full flex items-center justify-center text-white/20 text-xs">Cargando práctica...</div>}><PracticeViewLazy /></Suspense>
 
   useEffect(() => { const unlisten = window.electronAPI.onHotkeyToggle(() => toggleCollapse()); return () => { if (typeof unlisten === 'function') unlisten() } }, [toggleCollapse])
   useEffect(() => { loadFavorites() }, [loadFavorites])
   useEffect(() => { const unlisten = window.electronAPI.onHorizontalChanged((val) => { setIsTransitioning(true); setTimeout(() => { setHorizontal(val); setIsTransitioning(false) }, 100) }); return () => { if (typeof unlisten === 'function') unlisten() } }, [setHorizontal])
-  
-  // Escuchar cuando el proceso main nos avisa de que el candado cambió
+
   useEffect(() => {
     const unlisten = window.electronAPI.onHotkeyClickThrough((isIgnoring) => { setClickThrough(isIgnoring) })
     return () => { if (typeof unlisten === 'function') unlisten() }
@@ -49,11 +51,11 @@ export default function App() {
            <span className="text-[11px] font-hud font-bold text-overlay-accent tracking-widest uppercase no-drag">{t('app.title')}</span>
            {selectedCharacter && (<><span className="text-white/20 text-xs">|</span><span className="text-xs font-hud font-semibold text-white/80 no-drag">{selectedCharacter}</span><button onClick={() => useOverlayStore.getState().clearCharacter()} className="text-[9px] text-white/30 hover:text-white/60 no-drag">✕</button></>)}
            {!isFocusMode && <div className="flex-1 no-drag"><SearchBar compact /></div>}
-           {isFocusMode && <div className="flex-1"></div>}
+           {isFocusMode && <div className="flex-1 text-right no-drag"><RankTracker compact /></div>}
            <WindowControls compact />
         </div>
-        {selectedCharacter && !isFocusMode && <div className="border-b border-white/5 bg-black/40"><FilterBar compact /></div>}
-        {selectedCharacter ? <ComboListHorizontal /> : <div className="flex-1 flex items-center justify-center"><p className="text-white/30 text-xs font-hud">{t('labels.select_char')}</p></div>}
+        {selectedCharacter && !isFocusMode && <div className="border-b border-white/5 bg-black/40"><Suspense fallback={null}><FilterBarLazy compact /></Suspense></div>}
+        {selectedCharacter ? <Suspense fallback={<div className="flex-1 flex items-center justify-center text-white/20">Cargando...</div>}><ComboListHorizontalLazy /></Suspense> : <div className="flex-1 flex items-center justify-center"><p className="text-white/30 text-xs font-hud">{t('labels.select_char')}</p></div>}
       </div>
     )
   }
@@ -62,8 +64,13 @@ export default function App() {
     <div className={`h-full flex flex-col ${transitionClass} cursor-crosshair ${containerBgClass}`}>
       <UpdateBanner />
       <WindowControls />
-      
-      {!isFocusMode && !isCompactMode && <SearchBar />}
+
+      {!isFocusMode && !isCompactMode && (
+        <div className="px-4 py-2 flex flex-col gap-2">
+          <RankTracker />
+          <SearchBar />
+        </div>
+      )}
 
       {selectedCharacter ? (
         <>
@@ -85,14 +92,18 @@ export default function App() {
             </div>
           )}
 
-          {!isFocusMode && !isCompactMode && <FilterBar />}
-          <ComboList />
+          {!isFocusMode && !isCompactMode && <Suspense fallback={null}><FilterBarLazy /></Suspense>}
+          <Suspense fallback={<div className="flex-1 flex items-center justify-center text-white/20">Cargando lista...</div>}><ComboListLazy /></Suspense>
         </>
       ) : (
-        <CharacterSelector />
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center text-white/20">Cargando selección...</div>}><CharacterSelectorLazy /></Suspense>
       )}
 
-      {showAdd && <AddComboForm onClose={() => setShowAdd(false)} onSaved={() => useOverlayStore.getState().refreshCombos()} />}
+      {showAdd && (
+        <Suspense fallback={null}>
+          <AddComboFormLazy onClose={() => setShowAdd(false)} onSaved={() => useOverlayStore.getState().refreshCombos()} />
+        </Suspense>
+      )}
     </div>
   )
 }
