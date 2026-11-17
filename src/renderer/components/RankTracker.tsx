@@ -11,17 +11,17 @@ interface RankTrackerProps {
 const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
   const { tekkenId, setTekkenId, rankData, setRankData, incrementWin, incrementLoss, resetSession, ewgfApiKey, setEwgfApiKey, fetchApiRankData, t } = useOverlayStore()
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    playerName: rankData?.playerName || tekkenId || 'SpringanVnzla',
-    tekkenIdCode: rankData?.tekkenIdCode || '2MJ4-GEqa-Dqrj',
-    rank: rankData?.rank || 'God of Destruction',
-    points: rankData?.points || '245856',
-    glicko: rankData?.glicko || 'μ 1327',
-    prowess: rankData?.prowess || '248.183',
-    region: rankData?.region || 'Americas',
-    mainChar: rankData?.mainChar || 'Victor',
-    wins: rankData?.wins || 0,
-    losses: rankData?.losses || 0,
+  const [formData, setFormData] = useState(rankData || {
+    playerName: tekkenId || '',
+    tekkenIdCode: '',
+    rank: 'Warrior',
+    points: '0',
+    glicko: '',
+    prowess: '',
+    region: '',
+    mainChar: 'Heihachi',
+    wins: 0,
+    losses: 0,
     ewgfApiKey: ewgfApiKey || ''
   })
   const [syncing, setSyncing] = useState(false)
@@ -59,8 +59,8 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
       setTimeout(() => setSyncMsg(''), 3000)
     } catch (err) {
       setSyncing(false)
-      setSyncMsg('Error en API Key')
-      setTimeout(() => setSyncMsg(''), 3000)
+      setSyncMsg('Error: API Key inválida o ruta incorrecta')
+      setTimeout(() => setSyncMsg(''), 4000)
     }
   }
 
@@ -77,17 +77,17 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
           <h3 className="font-bold text-overlay-accent uppercase">⚙️ EWGF.gg API Settings</h3>
           <button onClick={() => setIsEditing(false)} className="text-white/40 hover:text-white">✕</button>
         </div>
-        <p className="text-[9px] text-white/50 mb-1">Pega tu API Key de <span className="text-sky-400">ewgf.gg/settings?tab=developer</span>:</p>
+        <p className="text-[9px] text-white/50 mb-1">Pega tu API Key de <span className="text-sky-400">ewgf.gg/settings?tab=developer</span> o configura manual:</p>
 
         <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto pr-1">
           <label className="text-[10px] text-amber-400 font-bold">EWGF Developer API Key</label>
           <input type="password" value={formData.ewgfApiKey} onChange={(e) => setFormData({...formData, ewgfApiKey: e.target.value})} placeholder="eyJhbGci..." className={inputStyle} />
 
           <label className="text-[10px] text-white/50">Player Name</label>
-          <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder="SpringanVnzla" className={inputStyle} />
+          <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder="Tu nombre..." className={inputStyle} />
 
           <label className="text-[10px] text-white/50">Tekken ID Code</label>
-          <input type="text" value={formData.tekkenIdCode} onChange={(e) => setFormData({...formData, tekkenIdCode: e.target.value})} placeholder="2MJ4-GEqa-Dqrj" className={inputStyle} />
+          <input type="text" value={formData.tekkenIdCode} onChange={(e) => setFormData({...formData, tekkenIdCode: e.target.value})} placeholder="XXXX-XXXX-XXXX" className={inputStyle} />
 
           <label className="text-[10px] text-white/50">Rank</label>
           <select value={formData.rank} onChange={(e) => setFormData({...formData, rank: e.target.value})} className={selectStyle}>
@@ -122,17 +122,31 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
     )
   }
 
+  if (!rankData) {
+    return (
+      <div className="relative bg-black/80 border border-overlay-accent/30 rounded-xl p-3 backdrop-blur-md w-full no-drag shadow-2xl flex items-center justify-between h-20 text-white font-hud">
+        <div className="flex flex-col justify-center">
+          <span className="text-[11px] font-bold text-overlay-accent uppercase">Rank Tracker (Vacío)</span>
+          <span className="text-[9px] text-white/50">Configura tu perfil o API Key para mostrar tu banner</span>
+        </div>
+        <button onClick={() => setIsEditing(true)} className="text-[9px] font-hud text-white uppercase bg-overlay-accent/20 hover:bg-overlay-accent/40 px-3 py-1.5 rounded border border-overlay-accent/50">
+          ⚙️ Configurar
+        </button>
+      </div>
+    )
+  }
+
   if (compact) {
     return (
       <div className="flex items-center justify-between bg-black/90 border border-overlay-accent/40 rounded px-3 py-1.5 text-xs font-hud no-drag cursor-pointer shadow-lg" onClick={() => setIsEditing(true)}>
         <div className="flex items-center gap-2">
-          <span className="text-overlay-accent font-bold">{rankData?.playerName || formData.playerName || 'Player'}</span>
+          <span className="text-overlay-accent font-bold">{rankData.playerName || 'Player'}</span>
           <span className="text-white/30">|</span>
-          <span className="text-white/80 font-semibold">{rankData?.rank || formData.rank || 'Warrior'}</span>
+          <span className="text-white/80 font-semibold">{rankData.rank || 'Warrior'}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-sky-400 font-bold">{rankData?.glicko || formData.glicko || 'μ 1327'}</span>
-          <span className="text-emerald-400 text-[10px] font-bold">W:{rankData?.wins ?? 0} L:{rankData?.losses ?? 0} ({winRate}%)</span>
+          <span className="text-[10px] text-sky-400 font-bold">{rankData.glicko || ''}</span>
+          <span className="text-emerald-400 text-[10px] font-bold">W:{rankData.wins ?? 0} L:{rankData.losses ?? 0} ({winRate}%)</span>
         </div>
       </div>
     )
@@ -144,25 +158,25 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
         {/* Izquierda: Avatar / Glicko badge */}
         <div className="flex items-center gap-3">
           <div className="relative w-16 h-16 rounded-lg bg-neutral-800 border border-overlay-accent/30 overflow-hidden flex items-center justify-center shadow-inner">
-            <span className="text-2xl font-black text-overlay-accent uppercase">{rankData?.mainChar?.[0] || formData.mainChar?.[0] || 'T'}</span>
+            <span className="text-2xl font-black text-overlay-accent uppercase">{rankData.mainChar?.[0] || 'T'}</span>
             <div className="absolute bottom-0 inset-x-0 bg-black/80 text-[8px] text-center text-emerald-400 font-bold py-0.5 px-1 border-t border-white/10">
-              {rankData?.glicko || formData.glicko || 'μ 1327'}
+              {rankData.glicko || 'μ 0'}
             </div>
           </div>
           <div className="flex flex-col justify-center">
             <div className="flex items-center gap-2">
-              <span className="text-[16px] font-black uppercase tracking-wide text-white drop-shadow">{rankData?.playerName || formData.playerName}</span>
-              <span className="text-[9px] bg-white/10 text-white/70 px-1.5 py-0.5 rounded tracking-wider">{rankData?.region || formData.region || 'Americas'}</span>
+              <span className="text-[16px] font-black uppercase tracking-wide text-white drop-shadow">{rankData.playerName}</span>
+              <span className="text-[9px] bg-white/10 text-white/70 px-1.5 py-0.5 rounded tracking-wider">{rankData.region || 'Americas'}</span>
             </div>
             <div className="text-[10px] text-white/50 tracking-wider flex items-center gap-1.5 mt-0.5">
-              <span>{rankData?.tekkenIdCode || formData.tekkenIdCode}</span>
-              <span className="text-overlay-accent font-semibold">• Main: {rankData?.mainChar || formData.mainChar}</span>
+              <span>{rankData.tekkenIdCode}</span>
+              <span className="text-overlay-accent font-semibold">• Main: {rankData.mainChar}</span>
             </div>
             {/* Wins / Losses quick counter */}
             <div className="flex items-center gap-2 mt-1.5 text-[10px]">
-              <span className="text-emerald-400 font-bold">W: {rankData?.wins ?? 0}</span>
+              <span className="text-emerald-400 font-bold">W: {rankData.wins ?? 0}</span>
               <button onClick={(e) => { e.stopPropagation(); incrementWin(); }} className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 px-1 rounded text-[9px]">+</button>
-              <span className="text-rose-400 font-bold ml-1">L: {rankData?.losses ?? 0}</span>
+              <span className="text-rose-400 font-bold ml-1">L: {rankData.losses ?? 0}</span>
               <button onClick={(e) => { e.stopPropagation(); incrementLoss(); }} className="bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 px-1 rounded text-[9px]">+</button>
               <span className="text-white/40 ml-1">({winRate}% WR)</span>
               <button onClick={(e) => { e.stopPropagation(); resetSession(); }} className="text-white/30 hover:text-white/70 text-[8px] ml-1" title="Reset W/L">↺</button>
@@ -170,16 +184,16 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
           </div>
         </div>
 
-        {/* Derecha: Rango y Tekken Prowess (Estilo EWGF.gg) */}
+        {/* Derecha: Rango y Tekken Prowess */}
         <div className="flex flex-col items-end justify-center pr-2">
             <div className="text-[13px] font-black text-amber-400 uppercase tracking-widest italic drop-shadow-lg text-right max-w-[200px] truncate">
-                {rankData?.rank || formData.rank || 'God of Destruction'}
+                {rankData.rank || 'Warrior'}
             </div>
             <div className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">
                 Tekken Prowess
             </div>
             <div className="text-[13px] font-bold text-overlay-accent tracking-widest">
-                {rankData?.prowess || formData.prowess || '248.183'}
+                {rankData.prowess || '0'}
             </div>
         </div>
 
