@@ -9,63 +9,53 @@ interface RankTrackerProps {
 }
 
 const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
-  const { tekkenId, setTekkenId, rankData, setRankData, incrementWin, incrementLoss, resetSession, ewgfApiKey, setEwgfApiKey, fetchApiRankData, t } = useOverlayStore()
+  const { tekkenId, setTekkenId, rankData, setRankData, incrementWin, incrementLoss, resetSession, t } = useOverlayStore()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(rankData || {
-    playerName: tekkenId || '',
+    playerName: '',
     tekkenIdCode: '',
-    rank: 'Warrior',
+    rank: 'Beginner',
     points: '0',
     glicko: '',
     prowess: '',
     region: '',
     mainChar: 'Heihachi',
     wins: 0,
-    losses: 0,
-    ewgfApiKey: ewgfApiKey || ''
+    losses: 0
   })
-  const [syncing, setSyncing] = useState(false)
-  const [syncMsg, setSyncMsg] = useState('')
 
   useEffect(() => {
     if (rankData) {
-      setFormData(prev => ({ ...prev, ...rankData, ewgfApiKey }))
-    } else if (tekkenId) {
-      setFormData(prev => ({ ...prev, playerName: tekkenId }))
+      setFormData(rankData)
     }
-  }, [rankData, tekkenId, ewgfApiKey])
+  }, [rankData])
 
   const handleSave = () => {
     setTekkenId(formData.playerName)
-    setEwgfApiKey(formData.ewgfApiKey)
     setRankData(formData)
     setIsEditing(false)
   }
 
-  const handleApiSync = async () => {
-    if (!formData.ewgfApiKey) {
-      setSyncMsg('Introduce tu API Key primero')
-      setTimeout(() => setSyncMsg(''), 3000)
-      return
-    }
-    setSyncing(true)
-    setSyncMsg('Consultando EWGF API...')
-    try {
-      setEwgfApiKey(formData.ewgfApiKey)
-      await fetchApiRankData()
-      setSyncing(false)
-      setSyncMsg('¡Sincronizado vía API!')
-      setIsEditing(false)
-      setTimeout(() => setSyncMsg(''), 3000)
-    } catch (err) {
-      setSyncing(false)
-      setSyncMsg('Error: API Key inválida o ruta incorrecta')
-      setTimeout(() => setSyncMsg(''), 4000)
-    }
+  const handleClear = () => {
+    localStorage.removeItem('t8_rank_data')
+    setRankData(null)
+    setFormData({
+      playerName: '',
+      tekkenIdCode: '',
+      rank: 'Beginner',
+      points: '0',
+      glicko: '',
+      prowess: '',
+      region: '',
+      mainChar: 'Heihachi',
+      wins: 0,
+      losses: 0
+    })
+    setIsEditing(false)
   }
 
-  const totalMatches = (rankData?.wins ?? formData.wins ?? 0) + (rankData?.losses ?? formData.losses ?? 0)
-  const winRate = totalMatches > 0 ? Math.round(((rankData?.wins ?? formData.wins ?? 0) / totalMatches) * 100) : 0
+  const totalMatches = (rankData?.wins ?? 0) + (rankData?.losses ?? 0)
+  const winRate = totalMatches > 0 ? Math.round(((rankData?.wins ?? 0) / totalMatches) * 100) : 0
 
   const selectStyle = "bg-neutral-900 text-white p-1.5 rounded border border-overlay-accent/30 outline-none w-full text-xs"
   const inputStyle = "bg-neutral-900 border border-overlay-accent/30 rounded px-2 py-1.5 text-white text-xs w-full"
@@ -74,15 +64,12 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
     return (
       <div className="flex flex-col gap-2 p-3 bg-black/95 border border-overlay-accent rounded-lg no-drag cursor-default z-50 w-72 text-white text-xs font-hud shadow-2xl">
         <div className="flex justify-between items-center mb-1">
-          <h3 className="font-bold text-overlay-accent uppercase">⚙️ EWGF.gg API Settings</h3>
+          <h3 className="font-bold text-overlay-accent uppercase">⚙️ EWGF Profile Editor</h3>
           <button onClick={() => setIsEditing(false)} className="text-white/40 hover:text-white">✕</button>
         </div>
-        <p className="text-[9px] text-white/50 mb-1">Pega tu API Key de <span className="text-sky-400">ewgf.gg/settings?tab=developer</span> o configura manual:</p>
+        <p className="text-[9px] text-white/50 mb-1">Configura tus datos para mostrarlos en el banner:</p>
 
-        <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto pr-1">
-          <label className="text-[10px] text-amber-400 font-bold">EWGF Developer API Key</label>
-          <input type="password" value={formData.ewgfApiKey} onChange={(e) => setFormData({...formData, ewgfApiKey: e.target.value})} placeholder="eyJhbGci..." className={inputStyle} />
-
+        <div className="flex flex-col gap-1.5 max-h-[300px] overflow-y-auto pr-1">
           <label className="text-[10px] text-white/50">Player Name</label>
           <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder="Tu nombre..." className={inputStyle} />
 
@@ -109,27 +96,34 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
               <input type="text" value={formData.prowess} onChange={(e) => setFormData({...formData, prowess: e.target.value})} placeholder="248.183" className={inputStyle} />
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-white/50">Region</label>
+              <input type="text" value={formData.region} onChange={(e) => setFormData({...formData, region: e.target.value})} placeholder="Americas" className={inputStyle} />
+            </div>
+            <div>
+              <label className="text-[10px] text-white/50">Points</label>
+              <input type="text" value={formData.points} onChange={(e) => setFormData({...formData, points: e.target.value})} placeholder="0" className={inputStyle} />
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-1.5 mt-2">
           <button onClick={handleSave} className="flex-1 text-black font-bold uppercase cursor-pointer bg-overlay-accent p-2 rounded hover:bg-white transition-colors text-[10px]">Guardar</button>
-          <button onClick={handleApiSync} disabled={syncing} className="flex-1 text-white font-bold uppercase cursor-pointer bg-sky-600 p-2 rounded hover:bg-sky-500 transition-colors text-[10px] disabled:opacity-50">
-            {syncing ? 'Sync...' : '⚡ Sync API'}
-          </button>
+          <button onClick={handleClear} className="text-rose-400 font-bold uppercase cursor-pointer bg-rose-950/40 p-2 rounded hover:bg-rose-900/60 transition-colors text-[10px]" title="Borrar y dejar en blanco">Borrar</button>
         </div>
-        {syncMsg && <div className="text-center text-[10px] text-amber-400 mt-1">{syncMsg}</div>}
       </div>
     )
   }
 
   if (!rankData) {
     return (
-      <div className="relative bg-black/80 border border-overlay-accent/30 rounded-xl p-3 backdrop-blur-md w-full no-drag shadow-2xl flex items-center justify-between h-20 text-white font-hud">
-        <div className="flex flex-col justify-center">
-          <span className="text-[11px] font-bold text-overlay-accent uppercase">Rank Tracker (Vacío)</span>
-          <span className="text-[9px] text-white/50">Configura tu perfil o API Key para mostrar tu banner</span>
+      <div className="relative bg-black/60 border border-white/10 rounded-xl p-2.5 backdrop-blur-md w-full no-drag shadow-lg flex items-center justify-between h-14 text-white font-hud">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold text-white/50 uppercase">Rank Tracker (Vacío)</span>
         </div>
-        <button onClick={() => setIsEditing(true)} className="text-[9px] font-hud text-white uppercase bg-overlay-accent/20 hover:bg-overlay-accent/40 px-3 py-1.5 rounded border border-overlay-accent/50">
+        <button onClick={() => setIsEditing(true)} className="text-[9px] font-hud text-overlay-accent uppercase bg-overlay-accent/10 hover:bg-overlay-accent/30 px-2.5 py-1 rounded border border-overlay-accent/30">
           ⚙️ Configurar
         </button>
       </div>
@@ -166,11 +160,11 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
           <div className="flex flex-col justify-center">
             <div className="flex items-center gap-2">
               <span className="text-[16px] font-black uppercase tracking-wide text-white drop-shadow">{rankData.playerName}</span>
-              <span className="text-[9px] bg-white/10 text-white/70 px-1.5 py-0.5 rounded tracking-wider">{rankData.region || 'Americas'}</span>
+              {rankData.region && <span className="text-[9px] bg-white/10 text-white/70 px-1.5 py-0.5 rounded tracking-wider">{rankData.region}</span>}
             </div>
             <div className="text-[10px] text-white/50 tracking-wider flex items-center gap-1.5 mt-0.5">
               <span>{rankData.tekkenIdCode}</span>
-              <span className="text-overlay-accent font-semibold">• Main: {rankData.mainChar}</span>
+              {rankData.mainChar && <span className="text-overlay-accent font-semibold">• Main: {rankData.mainChar}</span>}
             </div>
             {/* Wins / Losses quick counter */}
             <div className="flex items-center gap-2 mt-1.5 text-[10px]">
@@ -187,20 +181,20 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
         {/* Derecha: Rango y Tekken Prowess */}
         <div className="flex flex-col items-end justify-center pr-2">
             <div className="text-[13px] font-black text-amber-400 uppercase tracking-widest italic drop-shadow-lg text-right max-w-[200px] truncate">
-                {rankData.rank || 'Warrior'}
+                {rankData.rank || ''}
             </div>
             <div className="text-[9px] text-white/40 uppercase tracking-widest mt-0.5">
                 Tekken Prowess
             </div>
             <div className="text-[13px] font-bold text-overlay-accent tracking-widest">
-                {rankData.prowess || '0'}
+                {rankData.prowess || ''}
             </div>
         </div>
 
         {/* Botón de configuración en esquina superior derecha */}
         <div className="absolute top-2 right-2 flex items-center gap-1.5">
           <button onClick={() => setIsEditing(true)} className="text-[8px] font-hud text-white/40 hover:text-overlay-accent uppercase bg-black/40 px-2 py-1 rounded border border-white/10 flex items-center gap-1">
-            ⚙️ Editar API
+            ⚙️ Editar
           </button>
         </div>
     </div>
