@@ -11,7 +11,7 @@ let tekkenRunning = false
 let watcherInterval: ReturnType<typeof setInterval> | null = null
 
 function checkTekken(): void {
-  exec(`tasklist /FI "IMAGENAME eq ${TEKKEN_EXE}" /NH`, (err, stdout) => {
+  exec(`tasklist /FI "IMAGENAME eq ${TEKKEN_EXE}" /NH`, { windowsHide: true }, (err, stdout) => {
     if (err) return
     const isRunning = stdout.toLowerCase().includes(TEKKEN_EXE.toLowerCase())
     if (isRunning && !tekkenRunning) {
@@ -52,15 +52,24 @@ function createWindow(): void {
 
   mainWindow.setAlwaysOnTop(true, 'screen-saver')
   mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
-  mainWindow.hide()
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' } })
 
-  if (process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-    mainWindow.webContents.openDevTools({ mode: 'detach' })
+  const devServerUrl = process.env['ELECTRON_RENDERER_URL']
+  if (devServerUrl) {
+    // En desarrollo la ventana se muestra al instante. Si no, `npm run dev`
+    // parece no hacer nada: en producción se oculta hasta detectar Tekken 8.
+    mainWindow.loadURL(devServerUrl)
+    mainWindow.showInactive()
+
+    // DevTools provoca los avisos "Autofill.enable/setAddresses failed" de Chromium,
+    // así que solo se abren si se piden explícitamente.
+    if (process.env['OPEN_DEVTOOLS'] === '1') {
+      mainWindow.webContents.openDevTools({ mode: 'detach' })
+    }
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.hide()
   }
 }
 

@@ -57,6 +57,8 @@ npm run build      # compila main, preload y renderer en out/
 npm run dist       # compila y genera el instalador NSIS en dist/
 ```
 
+> En `npm run dev` la ventana se muestra al instante (en la versión instalada permanece oculta hasta detectar Tekken 8). DevTools ya no se abren solos: si los necesitas, `OPEN_DEVTOOLS=1 npm run dev` o, en PowerShell, `$env:OPEN_DEVTOOLS='1'; npm run dev`.
+
 ### Estructura
 
 ```
