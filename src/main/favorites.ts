@@ -31,6 +31,11 @@ export function removeFavorite(id: string): void {
   store.set('ids', getFavorites().filter((i) => i !== id))
 }
 
+/** Reemplaza la lista completa (usado por la migración de ids). */
+export function setFavorites(ids: string[]): void {
+  store.set('ids', [...new Set(ids)])
+}
+
 export function isFavorite(id: string): boolean {
   return getFavorites().includes(id)
 }

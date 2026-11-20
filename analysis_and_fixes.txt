@@ -36,6 +36,8 @@ El build (`electron-vite`) no ejecuta `tsc`, por eso estos errores convivían co
 | `src/renderer/store/overlayStore.ts` | Buscaba en `c.author`, campo inexistente | `c.creator` |
 | `src/renderer/main.tsx` | `ErrorBoundary` devolvía `this.state.children` → pantalla en blanco | `this.props.children` |
 | `tsconfig.node.json` | `TS5095` impedía comprobar el proyecto node | `module: ESNext` |
+| `src/shared/comboHash.ts` | Los ids eran `personaje-indice`, así que al reordenar la web los favoritos apuntaban a otro combo | `comboId`/`makeComboId` estables por contenido + migración única al arrancar |
+| `src/main/ipc-handlers.ts` | Sin migración de datos al cambiar el esquema de ids | `migrateLegacyComboIds()` reescribe caché, favoritos, aprendidos y notas (marcada con `idsMigrated`) |
 | `src/renderer/locales/*` | Faltaba la clave `filters.learned` en los tres idiomas | Añadida |
 | `README.md`, `.gitignore` | Marcadores de conflicto de git | Reescritos sin conflictos |
 | `package.json` | Sin verificación de tipos ni pruebas | Scripts `typecheck` y `test` |
@@ -45,13 +47,14 @@ El build (`electron-vite`) no ejecuta `tsc`, por eso estos errores convivían co
 
 ```
 $ npm run typecheck        # web + node, sin errores
-$ npm test                 # 14/14 en verde
-$ npm run build            # main 29.9 kB, preload 4.6 kB, renderer 384 kB
+$ npm test                 # 18/18 en verde
+$ npm run build            # main 32,4 kB, preload 4,6 kB, renderer 384 kB
+$ electron .               # arranque limpio + migración de ids (1.057 reescritos)
 ```
 
 ## 4. Limitaciones conocidas
 
-- **IDs de combo dependientes del orden.** `scraper.ts` genera `id = personaje-índice`. Si el sitio reordena, los favoritos/notas/aprendidos apuntan a otro combo. Migrar a `personaje-hash` exige una migración de datos del usuario; no se hizo para no perder los existentes.
+- **Ids migrados.** Pasaron de `personaje-indice` a `personaje-hash` (estables ante reordenamientos). La migración corre una sola vez al arrancar, reescribe el caché y los datos del usuario, y quedó verificada sobre datos reales: 1.057 ids reescritos y 7 de 8 marcadores personales resueltos contra el caché. El que falla, `Bob-0`, corresponde a un personaje que no estaba en caché, así que su equivalencia no es recuperable.
 - **Perfil de rango manual.** Los scrapers de Wavu Wank / EWGF.gg dependen de terceros y de una API key.
 - **`resources/yt-dlp.exe`** se empaqueta pero no se usa.
-- **Sin pruebas de UI** (requieren Electron y un entorno gráfico).
+- **Sin pruebas de UI** (requieren Electron y un entorno gráfico): se verifica el arranque, no el aspecto visual.

@@ -5,11 +5,11 @@ import { readFile, writeFile } from 'fs/promises';
 import * as cheerio from 'cheerio';
 import { autoUpdater } from 'electron-updater';
 import { scrapeCharacterCombos } from './scraper';
-import { getCachedCombos, setCachedCombos, clearCache, getCacheInfo } from './cache';
+import { getCachedCombos, setCachedCombos, clearCache, getCacheInfo, remapAllCachedIds } from './cache';
 import { CHARACTER_NAMES, CHARACTER_SLUGS } from '../renderer/types/combo';
 import { openPracticeWindow, registerPracticeIpc } from './practiceWindow';
-import { getFavorites, isFavorite, addFavorite, removeFavorite } from './favorites';
-import { comboHash } from '../shared/comboHash';
+import { getFavorites, isFavorite, addFavorite, removeFavorite, setFavorites } from './favorites';
+import { comboHash, makeComboId } from '../shared/comboHash';
 import { fetchPlayerStatsFromWeb, fetchPlayerStatsWithApiKey } from './playerScraper';
 import Store from 'electron-store';
 import type { Combo } from '../renderer/types/combo';
@@ -22,9 +22,10 @@ const store = new Store<{
   seenHashes: Record<string, string[]>;
   customNotes: Record<string, string>;
   learnedCombos: string[];
+  idsMigrated: boolean;
 }>({
   name: 'combo-extras',
-  defaults: { customCombos: [], seenHashes: {}, customNotes: {}, learnedCombos: [] }
+  defaults: { customCombos: [], seenHashes: {}, customNotes: {}, learnedCombos: [], idsMigrated: false }
 });
 
 async function getSlugForCharacter(name: string): Promise<string> {
@@ -56,7 +57,41 @@ async function getSlugForCharacter(name: string): Promise<string> {
   }
 }
 
+/**
+ * Migración única de ids.
+ *
+ * Los ids antiguos eran `personaje-indice`, así que cualquier reorden en la web
+ * hacía que favoritos, notas y combos aprendidos apuntaran a otro combo. Al
+ * arrancar se reescriben el caché y los datos del usuario a ids estables por
+ * contenido (`personaje-hash`). Es idempotente: queda marcada en `idsMigrated`.
+ */
+function migrateLegacyComboIds(): void {
+  if (store.get('idsMigrated')) return;
+
+  const mapping = remapAllCachedIds((character, combo) =>
+    makeComboId(character, combo.notation, combo.creator)
+  );
+  const remap = (id: string) => mapping.get(id) ?? id;
+
+  setFavorites(getFavorites().map(remap));
+  store.set('learnedCombos', [...new Set(store.get('learnedCombos').map(remap))]);
+
+  const notes = store.get('customNotes') ?? {};
+  const migratedNotes: Record<string, string> = {};
+  for (const [id, note] of Object.entries(notes)) migratedNotes[remap(id)] = note;
+  store.set('customNotes', migratedNotes);
+
+  store.set('idsMigrated', true);
+  console.log(`[migration] ids reescritos: ${mapping.size}`);
+}
+
 export function registerIpcHandlers(win: BrowserWindow): void {
+  try {
+    migrateLegacyComboIds();
+  } catch (err) {
+    console.error('[migration] falló:', (err as Error).message);
+  }
+
   registerPracticeIpc();
 
   // -------------------------------------------------

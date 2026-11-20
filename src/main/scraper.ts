@@ -1,6 +1,7 @@
 import * as cheerio from 'cheerio'
 import type { AnyNode } from 'domhandler'
 import type { Combo } from '../renderer/types/combo'
+import { makeComboId } from '../shared/comboHash'
 
 const BASE_URL = 'https://tekken8combo.kagewebsite.com'
 
@@ -23,9 +24,9 @@ function parseCombosFromHtml(html: string, character: string): Combo[] {
 
   const entries = $('li.combo-item')
 
-  entries.each((i, el) => {
+  entries.each((_, el) => {
     try {
-      const combo = parseComboEntry($, el, character, i)
+      const combo = parseComboEntry($, el, character)
       if (combo) combos.push(combo)
     } catch {
       // skip malformed entries
@@ -38,8 +39,7 @@ function parseCombosFromHtml(html: string, character: string): Combo[] {
 function parseComboEntry(
   $: cheerio.CheerioAPI,
   el: AnyNode,
-  character: string,
-  index: number
+  character: string
 ): Combo | null {
   const $el = $(el)
 
@@ -112,7 +112,7 @@ function parseComboEntry(
   if (noteEl.length) notes = noteEl.text().trim()
 
   return {
-    id: `${character}-${index}`,
+    id: makeComboId(character, notation, creator),
     notation,
     notationImages,
     damage,
@@ -176,7 +176,7 @@ export async function scrapeCharacterCombos(
     }
   }
 
-  allCombos = allCombos.map((c, i) => ({ ...c, id: `${charName}-${i}` }))
+  allCombos = allCombos.map((c) => ({ ...c, id: makeComboId(c.character, c.notation, c.creator) }))
 
   return { combos: allCombos, rawHtml: firstHtml }
 }

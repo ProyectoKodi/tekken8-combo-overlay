@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { comboHash } from '../src/shared/comboHash.ts'
+import { comboHash, comboId, makeComboId } from '../src/shared/comboHash.ts'
 
 test('el mismo combo produce el mismo hash aunque cambie el formato', () => {
   const a = comboHash({ character: 'Jin', notation: 'd/f,2 ► b,1,4', creator: 'Kage', damage: 55 })
@@ -34,4 +34,33 @@ test('es determinista entre llamadas', () => {
 
 test('tolera campos opcionales ausentes', () => {
   assert.doesNotThrow(() => comboHash({ character: 'Panda', notation: 'b+1' }))
+})
+
+test('el id estable no depende de espacios ni mayúsculas', () => {
+  const a = makeComboId('Jin', 'd/f,2 ► b,1,4', 'Kage')
+  const b = makeComboId('jin', 'D/F, 2 ► B, 1, 4', ' kage ')
+  assert.equal(a, b)
+})
+
+test('el id cambia con la notación, el autor o el personaje', () => {
+  const base = comboId('Jin', 'd/f,2', 'Kage')
+  assert.notEqual(base, comboId('Jin', 'd/f,3', 'Kage'))
+  assert.notEqual(base, comboId('Jin', 'd/f,2', 'Otro'))
+  assert.notEqual(base, comboId('Kazuya', 'd/f,2', 'Kage'))
+})
+
+test('el id lleva el personaje como prefijo y no choca con los custom', () => {
+  const id = makeComboId('Jack-8', 'df+2')
+  assert.ok(id.startsWith('jack-8-'))
+  assert.ok(!id.startsWith('custom-'))
+  assert.equal(makeComboId('Devil Jin', 'df+2').startsWith('devil-jin-'), true)
+})
+
+test('dos combos distintos del mismo personaje no colisionan', () => {
+  const ids = new Set([
+    makeComboId('Heihachi', 'df+1,2', 'A'),
+    makeComboId('Heihachi', 'df+1,2', 'B'),
+    makeComboId('Heihachi', 'df+1,3', 'A'),
+  ])
+  assert.equal(ids.size, 3)
 })
