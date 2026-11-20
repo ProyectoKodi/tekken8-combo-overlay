@@ -27,10 +27,24 @@ const portraitFiles = import.meta.glob('../assets/banner/personaje/*.webp', {
   import: 'default',
 }) as Record<string, string>
 
+const BACKGROUND_MAP = toSlugMap(backgroundFiles)
+
 export const RANK_ART = toSlugMap(rankFiles)
 export const PORTRAITS = toSlugMap(portraitFiles)
-export const BACKGROUNDS = Object.values(toSlugMap(backgroundFiles)).sort()
+
+/** Fondos disponibles para el selector del editor. */
+export const BACKGROUND_OPTIONS: Array<{ id: string; url: string }> = Object.entries(BACKGROUND_MAP)
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([id, url]) => ({ id, url }))
 
 export const bannerRankArt = (rank: string): string | null => rankArtUrl(RANK_ART, rank)
 export const bannerPortrait = (character: string): string | null => portraitUrl(PORTRAITS, character)
-export const bannerBackground = (seed: string): string | null => backgroundFor(seed, BACKGROUNDS)
+
+/**
+ * Fondo elegido por el usuario o, si no hay o no existe, uno determinista
+ * a partir de la semilla (personaje principal).
+ */
+export function bannerBackground(preferred: string | undefined, seed: string): string | null {
+  if (preferred && BACKGROUND_MAP[preferred]) return BACKGROUND_MAP[preferred]
+  return backgroundFor(seed, BACKGROUND_OPTIONS.map((o) => o.url))
+}

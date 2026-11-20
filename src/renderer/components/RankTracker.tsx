@@ -4,6 +4,7 @@ import { CHARACTER_NAMES } from '../types/combo'
 import type { RankData } from '../types/rank'
 import { DEFAULT_PROFILE } from '../types/rank'
 import { TEKKEN_RANKS } from '../utils/bannerLookup'
+import { BACKGROUND_OPTIONS } from '../utils/bannerAssets'
 import PlayerBanner from './PlayerBanner'
 
 const RANGOS = TEKKEN_RANKS
@@ -15,7 +16,7 @@ interface RankTrackerProps {
 }
 
 const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
-  const { tekkenId, setTekkenId, rankData, setRankData, incrementWin, incrementLoss, resetSession, t } = useOverlayStore()
+  const { tekkenId, setTekkenId, rankData, setRankData, t } = useOverlayStore()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(rankData || {
     playerName: '',
@@ -66,9 +67,6 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
     window.open(url, '_blank')
   }
 
-  const totalMatches = (rankData?.wins ?? 0) + (rankData?.losses ?? 0)
-  const winRate = totalMatches > 0 ? Math.round(((rankData?.wins ?? 0) / totalMatches) * 100) : 0
-
   const inputStyle = "bg-[#0f172a] border border-white/10 rounded px-2 py-1.5 text-white text-xs w-full focus:border-overlay-accent outline-none"
   const labelStyle = "text-[10px] text-white/50 uppercase tracking-wider font-bold mb-1"
 
@@ -90,6 +88,28 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
 
         <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1">
           <div>
+            <label className={labelStyle}>Fondo del banner</label>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setFormData({...formData, background: undefined})}
+                className={`h-9 w-16 shrink-0 rounded border text-[9px] font-bold uppercase transition-colors ${!formData.background ? 'border-overlay-accent bg-overlay-accent/20 text-overlay-accent' : 'border-white/15 text-white/40 hover:text-white/70'}`}
+                title="Elegir automáticamente según el personaje"
+              >
+                Auto
+              </button>
+              {BACKGROUND_OPTIONS.map((bg) => (
+                <button
+                  key={bg.id}
+                  onClick={() => setFormData({...formData, background: bg.id})}
+                  className={`h-9 w-16 shrink-0 overflow-hidden rounded border transition-all ${formData.background === bg.id ? 'border-overlay-accent ring-1 ring-overlay-accent' : 'border-white/15 hover:border-white/40'}`}
+                  title={bg.id}
+                >
+                  <img src={bg.url} alt={bg.id} className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
             <label className={labelStyle}>Nombre</label>
             <input type="text" value={formData.playerName} onChange={(e) => setFormData({...formData, playerName: e.target.value})} placeholder="Tu nombre..." className={inputStyle} />
           </div>
@@ -97,19 +117,17 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
             <label className={labelStyle}>Tekken ID</label>
             <input type="text" value={formData.tekkenIdCode} onChange={(e) => setFormData({...formData, tekkenIdCode: e.target.value})} placeholder="XXXX-XXXX-XXXX" className={inputStyle} />
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className={labelStyle}>Rango</label>
-              <select value={formData.rank} onChange={(e) => setFormData({...formData, rank: e.target.value})} className={inputStyle}>
-                  {RANGOS.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelStyle}>Main</label>
-              <select value={formData.mainChar} onChange={(e) => setFormData({...formData, mainChar: e.target.value})} className={inputStyle}>
-                  {PERSONAJES.map(p => <option key={p} value={p} className="bg-neutral-900">{p}</option>)}
-              </select>
-            </div>
+          <div>
+            <label className={labelStyle}>Rango</label>
+            <select value={formData.rank} onChange={(e) => setFormData({...formData, rank: e.target.value})} className={inputStyle}>
+                {RANGOS.map(r => <option key={r} value={r} className="bg-neutral-900">{r}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelStyle}>Main</label>
+            <select value={formData.mainChar} onChange={(e) => setFormData({...formData, mainChar: e.target.value})} className={inputStyle}>
+                {PERSONAJES.map(p => <option key={p} value={p} className="bg-neutral-900">{p}</option>)}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -143,6 +161,16 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
             <label className={labelStyle}>Última conexión</label>
             <input type="text" value={formData.lastSeen} onChange={(e) => setFormData({...formData, lastSeen: e.target.value})} placeholder="hace 3 días" className={inputStyle} />
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className={labelStyle}>Victorias</label>
+              <input type="number" min={0} value={formData.wins ?? 0} onChange={(e) => setFormData({...formData, wins: Math.max(0, Number(e.target.value) || 0)})} className={inputStyle} />
+            </div>
+            <div>
+              <label className={labelStyle}>Derrotas</label>
+              <input type="number" min={0} value={formData.losses ?? 0} onChange={(e) => setFormData({...formData, losses: Math.max(0, Number(e.target.value) || 0)})} className={inputStyle} />
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-2 mt-2 pt-2 border-t border-white/10">
@@ -165,32 +193,13 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
   }
 
   if (compact) {
-    return (
-      <div className="flex items-center justify-between bg-[#0f172a] border border-white/10 rounded px-3 py-1.5 text-xs font-hud no-drag cursor-pointer shadow-lg" onClick={() => setIsEditing(true)}>
-        <div className="flex items-center gap-2">
-          <span className="text-overlay-accent font-bold">{rankData.playerName || 'Player'}</span>
-          <span className="text-white/30">|</span>
-          <span className="text-white/80 font-semibold">{rankData.rank || 'Warrior'}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-sky-400 font-bold">{rankData.glicko || ''}</span>
-          <span className="text-emerald-400 text-[10px] font-bold">W:{rankData.wins ?? 0} L:{rankData.losses ?? 0} ({winRate}%)</span>
-        </div>
-      </div>
-    )
+    const compactProfile: RankData = { ...DEFAULT_PROFILE, ...(rankData as Partial<RankData>) }
+    return <PlayerBanner profile={compactProfile} compact onEdit={() => setIsEditing(true)} />
   }
 
   // DISEÑO PRINCIPAL: ficha de jugador con el banner
   const profile: RankData = { ...DEFAULT_PROFILE, ...(rankData as Partial<RankData>) }
 
-  return (
-    <PlayerBanner
-      profile={profile}
-      onEdit={() => setIsEditing(true)}
-      onWin={incrementWin}
-      onLoss={incrementLoss}
-      onReset={resetSession}
-    />
-  )
+  return <PlayerBanner profile={profile} onEdit={() => setIsEditing(true)} />
 }
 export default RankTracker

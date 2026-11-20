@@ -9,7 +9,7 @@ Overlay de escritorio para **Tekken 8** (Windows) que muestra combos sobre el ju
 ## ✨ Características
 
 - **📚 Base de combos:** extrae los combos de [tekken8combo.kagewebsite.com](https://tekken8combo.kagewebsite.com/) con caché de 24 h.
-- **🖼️ Ficha de jugador:** banner con fondo de escenario, retrato de tu main, emblema del rango, región, prowess y contador W/L.
+- **🖼️ Ficha de jugador:** banner con fondo de escenario (elegible o automático), retrato de tu main, emblema del rango, región y prowess. Tiene variante compacta para el modo horizontal.
 - **🎨 Notación visual:** convierte texto (`d/f,2 ► b,1,4`) en los iconos oficiales, incluidos holds, just-frames, slides, delays y Heat Dash.
 - **🖥️ Overlay flotante:** ventana transparente, sin marco y *always-on-top*, pensada para "pantalla completa sin bordes".
 - **🖱️ Click-through:** el botón de candado (o **F8**) deja pasar los clics al juego.

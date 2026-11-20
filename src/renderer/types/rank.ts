@@ -13,6 +13,8 @@ export interface RankData {
   language: string
   message: string
   lastSeen: string
+  /** Id del fondo elegido (p. ej. `banner-bg-3`). Vacío = automático. */
+  background?: string
 }
 
 export const DEFAULT_PROFILE: RankData = {
