@@ -26,6 +26,9 @@ export default defineConfig({
   renderer: {
     root: resolve(__dirname, 'src/renderer'),
     build: {
+      // El outDir queda fuera del `root` del renderer, así que Vite no lo vacía
+      // por su cuenta y los assets viejos sobreviven entre builds.
+      emptyOutDir: true,
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/renderer/index.html')
