@@ -86,15 +86,7 @@ const getInitialLang = (): Language => { try { return (localStorage.getItem('t8_
 const getInitialRankData = (): any => {
   try {
     const saved = localStorage.getItem('t8_rank_data');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.playerName === 'SpringanVnzla' || !parsed.playerName) {
-        localStorage.removeItem('t8_rank_data');
-        return null;
-      }
-      return parsed;
-    }
-    return null;
+    return saved ? JSON.parse(saved) : null;
   } catch { return null }
 }
 const applyTheme = (color: ThemeColor) => { const themes: Record<ThemeColor, string> = { dorado: '#fbbf24', azul: '#38bdf8', rojo: '#ef4444', verde: '#4ade80', rosa: '#f472b6' }; document.documentElement.style.setProperty('--accent-color', themes[color]); localStorage.setItem('t8_theme', color) }

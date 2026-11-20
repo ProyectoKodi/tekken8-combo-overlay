@@ -1,24 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useOverlayStore } from '../store/overlayStore'
+import { CHARACTER_NAMES } from '../types/combo'
+import type { RankData } from '../types/rank'
+import { DEFAULT_PROFILE } from '../types/rank'
+import { TEKKEN_RANKS } from '../utils/bannerLookup'
+import PlayerBanner from './PlayerBanner'
 
-// Lista actualizada de rangos de Tekken 8 (hasta God of Destruction)
-const RANGOS = [
-  "Beginner", "1st Dan", "2nd Dan", "Fighter", "Strategist", "Combatant", 
-  "Brawler", "Ranger", "Cavalry", "Warrior", "Assailant", "Dominator", 
-  "Vanquisher", "Destroyer", "Eliminator", "Challenger", "Revenger", 
-  "Battle Ruler", "Fujin", "Raijin", "Kishin", "Bushin", "Tekken King", 
-  "Tekken Emperor", "Tekken God", "Tekken God Supreme", "God of Destruction"
-]
+const RANGOS = TEKKEN_RANKS
 
-// Lista actualizada de personajes (Base + DLCs hasta la fecha)
-const PERSONAJES = [
-  "Alisa", "Anna", "Armor King", "Asuka", "Azucena", "Bob", "Bryan", "Claudio", 
-  "Clive", "Devil Jin", "Dragunov", "Eddy", "Fahkumram", "Feng", "Heihachi", 
-  "Hwoarang", "Jack-8", "Jin", "Jun", "Kazuya", "King", "Kuma", "Lars", "Law", 
-  "Lee", "Leo", "Leroy", "Lidia", "Lili", "Miary Zo", "Nina", "Panda", "Paul", 
-  "Raven", "Reina", "Roger Jr.", "Shaheen", "Steve", "Victor", "Xiaoyu", 
-  "Yoshimitsu", "Zafina", "Yujiro Hanma", "Kunimitsu"
-]
+const PERSONAJES = CHARACTER_NAMES
 
 interface RankTrackerProps {
   compact?: boolean
@@ -190,123 +180,17 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
     )
   }
 
-  // DISEÑO PRINCIPAL (Estilo Wavu Wank / Leaderboard)
+  // DISEÑO PRINCIPAL: ficha de jugador con el banner
+  const profile: RankData = { ...DEFAULT_PROFILE, ...(rankData as Partial<RankData>) }
+
   return (
-    <div className="relative bg-[#0f172a] border border-[#1e293b] rounded-xl w-full no-drag overflow-hidden shadow-2xl flex flex-col md:flex-row text-white font-sans text-sm">
-      
-      {/* SECCIÓN IZQUIERDA: Avatar e Info */}
-      <div className="flex flex-1 p-4 gap-5">
-        {/* Avatar (Usamos la inicial del personaje o una imagen si tuvieras) */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 flex items-center justify-center relative shadow-inner overflow-hidden">
-            <span className="text-5xl font-black text-slate-300 uppercase drop-shadow-md">{rankData.mainChar?.[0] || 'T'}</span>
-          </div>
-          
-          {/* Glicko Badge (Estilo pill verde/rojo) */}
-          <div className="flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-full text-xs font-bold">
-            <span>μ</span>
-            <span>{rankData.glicko?.replace('μ ', '') || '1327'}</span>
-            <span className="text-emerald-500/60 text-[10px]">σ² 75</span>
-          </div>
-          <span className="text-[9px] text-slate-500">actualizado recientemente</span>
-        </div>
-
-        {/* Info de Texto */}
-        <div className="flex flex-col justify-start gap-2 flex-1">
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-black text-white tracking-wide">{rankData.playerName}</h2>
-            <button onClick={() => setIsEditing(true)} className="text-slate-500 hover:text-slate-300 text-xs bg-slate-800/50 p-1.5 rounded-md border border-slate-700">⚙️</button>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="font-mono bg-slate-800/50 px-1.5 py-0.5 rounded text-slate-300">{rankData.tekkenIdCode}</span>
-            <button onClick={() => { navigator.clipboard.writeText(rankData.tekkenIdCode || ''); alert('ID copiado'); }} className="hover:text-white" title="Copiar ID">📋</button>
-            <div className="w-px h-3 bg-slate-700 mx-1"></div>
-            <div className="flex items-center gap-1 hover:text-white cursor-pointer"><span>👤</span> Perfil</div>
-            <div className="flex items-center gap-1 hover:text-white cursor-pointer"><span>☆</span> Favorito</div>
-            <div className="flex items-center gap-1 hover:text-white cursor-pointer"><span>🛡️</span> Seguro</div>
-            <div className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded border border-slate-700 hover:bg-slate-700 cursor-pointer"><span>🔗</span> Compartir</div>
-          </div>
-
-          <div className="flex flex-col gap-1.5 mt-1">
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500 w-4 text-center">🎮</span>
-              <span className="text-slate-400">Platform:</span>
-              <span className="text-blue-400 font-semibold">{rankData.platform || 'Steam'}</span>
-              <span className="text-blue-300 font-mono text-[10px]">{rankData.tekkenIdCode || '76561198013128627'}</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500 w-4 text-center">🌐</span>
-              <span className="text-slate-400">Language:</span>
-              <span className="text-white font-semibold">{rankData.language || 'Spanish (Español)'}</span>
-            </div>
-            <div className="flex items-start gap-2 text-xs">
-              <span className="text-slate-500 w-4 text-center mt-0.5">💬</span>
-              <span className="text-slate-400">Player Message:</span>
-            </div>
-            <div className="ml-6 bg-slate-800/40 border border-slate-700 rounded p-1.5 text-slate-300 italic text-xs min-h-[28px]">
-              "{rankData.message || '¡A pelear!'}"
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* SECCIÓN DERECHA: Rango, Prowess, etc. */}
-      <div className="bg-[#131c2e] border-l border-slate-800 p-4 w-full md:w-72 flex flex-col justify-between">
-        
-        {/* Rango visual (Aquí iría la imagen del rango, usamos texto estilizado) */}
-        <div className="text-center flex flex-col items-center">
-          <div className="relative">
-            <span className="text-xl font-black text-amber-400 uppercase italic tracking-widest drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">
-              {rankData.rank || 'Tekken God'}
-            </span>
-            <div className="absolute -inset-1 bg-amber-500/20 blur-md rounded-full -z-10"></div>
-          </div>
-          <span className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">All time highest rank</span>
-          
-          <div className="mt-2 bg-slate-800/80 border border-slate-700 rounded-full px-3 py-0.5 text-xs font-semibold text-slate-200">
-            Top 83% in {rankData.region || 'Americas'}
-          </div>
-          <span className="text-[10px] text-slate-500 mt-1">Top 87% of Tekken Emperor</span>
-        </div>
-
-        {/* Detalles */}
-        <div className="flex flex-col gap-2 mt-3 border-t border-slate-800 pt-3">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <span>📍</span> Region:
-            </div>
-            <span className="font-semibold text-white">{rankData.region || 'Americas'}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-slate-400">
-              <span>📅</span> Last seen:
-            </div>
-            <span className="font-semibold text-white">{rankData.lastSeen || 'hace 3 días'}</span>
-          </div>
-        </div>
-
-        {/* Tekken Prowess Box */}
-        <div className="mt-3 bg-[#0a0f18] border border-slate-700 rounded-lg p-2 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-[9px] text-slate-500 uppercase tracking-widest">Tekken Prowess</span>
-            <span className="text-lg font-bold text-amber-400 tracking-wide">{rankData.prowess || '248.183'}</span>
-          </div>
-          <button onClick={() => setIsEditing(true)} className="text-slate-500 hover:text-white text-lg">✎</button>
-        </div>
-
-        {/* Contador de W/L */}
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800 text-xs">
-            <span className="text-emerald-400 font-bold">W: {rankData.wins ?? 0}</span>
-            <button onClick={(e) => { e.stopPropagation(); incrementWin(); }} className="bg-emerald-500/10 hover:bg-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">+</button>
-            <span className="text-rose-400 font-bold ml-2">L: {rankData.losses ?? 0}</span>
-            <button onClick={(e) => { e.stopPropagation(); incrementLoss(); }} className="bg-rose-500/10 hover:bg-rose-500/30 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">+</button>
-            <span className="text-slate-500 ml-1">({winRate}%)</span>
-            <button onClick={(e) => { e.stopPropagation(); resetSession(); }} className="text-slate-600 hover:text-white text-[10px]" title="Reset">↺</button>
-        </div>
-
-      </div>
-    </div>
+    <PlayerBanner
+      profile={profile}
+      onEdit={() => setIsEditing(true)}
+      onWin={incrementWin}
+      onLoss={incrementLoss}
+      onReset={resetSession}
+    />
   )
 }
 export default RankTracker

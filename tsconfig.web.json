@@ -12,7 +12,7 @@
       "@renderer/*": ["src/renderer/*"]
     },
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["src/renderer/**/*", "src/shared/**/*"]
 }
