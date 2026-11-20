@@ -16,8 +16,13 @@ Peso total: **70,8 MB → 1,69 MB**.
 ## Cómo regenerar los optimizados
 
 1. Cambia o añade material en esta carpeta.
-2. Ejecuta el script de conversión (Pillow) o pide que se actualice.
-3. Borra `out/` (`npm run clean`) y recompila: Vite no vacía el `outDir` del renderer.
+2. `npm run assets` — convierte lo que haya cambiado (incremental por fecha).
+   - `npm run assets -- --force` reescribe todo.
+   - `npm run assets -- --all` incluye los 19 fondos (por defecto solo 3 curados).
+3. `npm run build` para recompilar.
+
+Los fondos que entran por defecto se eligen en `scripts/optimize-assets.mjs`
+(constante `CURATED_BACKGROUNDS`).
 
 ## Notas
 

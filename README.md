@@ -54,6 +54,7 @@ npm install        # dependencias
 npm run dev        # Electron + Vite en modo desarrollo
 npm run typecheck  # TypeScript en los dos proyectos (renderer y node)
 npm test           # pruebas de la lógica pura (node:test)
+npm run assets     # regenera los WebP del banner desde assets-src/
 npm run build      # compila main, preload y renderer en out/
 npm run dist       # compila y genera el instalador NSIS en dist/
 ```
