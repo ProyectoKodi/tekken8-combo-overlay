@@ -189,12 +189,27 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   // Auto‑updater
   // -------------------------------------------------
   ipcMain.on('start-update-download', () => {
-    autoUpdater.downloadUpdate();
+    autoUpdater.downloadUpdate().catch((err) => console.error('[autoUpdater] download falló:', err.message));
+  });
+
+  // Solo se descarga cuando el usuario pulsa "Actualizar ahora"
+  autoUpdater.autoDownload = false;
+
+  autoUpdater.on('update-available', (info) => {
+    if (!win.isDestroyed()) win.webContents.send('update-available', { version: info.version });
   });
 
   autoUpdater.on('update-downloaded', () => {
-    win.webContents.send('update-downloaded');
+    if (!win.isDestroyed()) win.webContents.send('update-downloaded');
   });
+
+  autoUpdater.on('error', (err) => console.error('[autoUpdater]', err.message));
+
+  if (app.isPackaged) {
+    autoUpdater
+      .checkForUpdates()
+      .catch((err) => console.error('[autoUpdater] check falló:', err.message));
+  }
 
   ipcMain.on('quit-and-install', () => {
     autoUpdater.quitAndInstall();
