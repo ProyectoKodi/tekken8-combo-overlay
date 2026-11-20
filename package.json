@@ -8,6 +8,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
+    "typecheck": "tsc -p tsconfig.web.json --noEmit --composite false && tsc -p tsconfig.node.json --noEmit --composite false",
+    "test": "node --test --test-isolation=none tests/comboHash.test.ts tests/notationParser.test.ts",
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {

@@ -21,10 +21,8 @@ html, body {
 #root {
   width: 100vw;
   height: 100vh;
-  background: rgba(10, 10, 15, 0.88); /* Fondo oscuro semi-transparente */
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(15, 15, 22, 0.98); /* Fondo sólido oscuro para evitar bug de transparencia en Windows */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
   display: flex;

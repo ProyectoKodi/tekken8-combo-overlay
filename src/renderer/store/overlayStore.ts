@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { getTranslation, Language } from '../locales'
-import type { Combo } from './types/combo'
+import type { Combo } from '../types/combo'
 
 export type ThemeColor = 'dorado' | 'azul' | 'rojo' | 'verde' | 'rosa'
 
@@ -11,7 +11,7 @@ export interface FilterState {
   showOnlyFavorites: boolean
   showOnlyLearned: boolean
   minDamage: number
-  difficulty: '' | 'Fácil' | 'Media' | 'Difícil'
+  difficulty: '' | 'facil' | 'media' | 'dificil'
 }
 
 interface OverlayStore {
@@ -37,15 +37,17 @@ interface OverlayStore {
   filteredCombos: () => Combo[]
   favoriteIds: Set<string>
   loadFavorites: () => Promise<void>
+  isFavorite: (id: string) => boolean
   toggleFavorite: (id: string) => Promise<void>
   learnedIds: Set<string>
+  isLearned: (id: string) => boolean
   toggleLearned: (id: string) => Promise<void>
   collapsed: boolean
   toggleCollapse: () => void
   isHorizontal: boolean
   setHorizontal: (v: boolean) => void
   opacity: number
-  setOpacity: (v: boolean) => void
+  setOpacity: (v: number) => void
   recentCombos: Combo[]
   showOnlyRecent: boolean
   setShowOnlyRecent: (val: boolean) => void
@@ -105,8 +107,20 @@ export const useOverlayStore = create<OverlayStore>((set, get) => {
     combos: [], customCombos: [], loading: false, error: null, fromCache: false, fetchedAt: null,
     loadCombos: async (character) => {
       set({ loading: true, error: null })
-      try { const result = await window.electronAPI.fetchCombos(character); const custom = await window.electronAPI.getCustomCombos(character); const learned = await window.electronAPI.getLearnedCombos(); set({ combos: result.combos, customCombos: custom ?? [], learnedIds: new Set(learned), fromCache: result.fromCache, fetchedAt: result.fetchedAt ?? Date.now(), loading: false }) }
-      catch (err) { set({ error: (err as Error).message, loading: false }) }
+      try {
+        console.log('[loadCombos] fetching combos for', character);
+        const result = await window.electronAPI.fetchCombos(character);
+        console.log('[loadCombos] fetchCombos result length:', result?.combos?.length);
+        const custom = await window.electronAPI.getCustomCombos(character);
+        console.log('[loadCombos] custom combos:', custom?.length);
+        const learned = await window.electronAPI.getLearnedCombos();
+        console.log('[loadCombos] learned combos:', learned?.length);
+        set({ combos: result.combos, customCombos: custom ?? [], learnedIds: new Set(learned), fromCache: result.fromCache, fetchedAt: result.fetchedAt ?? Date.now(), loading: false })
+      }
+      catch (err) {
+        console.error('[loadCombos] error:', err);
+        set({ error: (err as Error).message, loading: false })
+      }
     },
     refreshCombos: async () => { const char = get().selectedCharacter; if (!char) return; await window.electronAPI.clearCache(char); await get().loadCombos(char) },
 
@@ -143,7 +157,7 @@ export const useOverlayStore = create<OverlayStore>((set, get) => {
     filteredCombos: () => {
       const { combos, customCombos, filters, favoriteIds, learnedIds, showOnlyRecent, recentCombos } = get()
       let result: Combo[] = showOnlyRecent ? [...recentCombos] : [...customCombos, ...combos]
-      if (filters.searchQuery.trim()) { const q = filters.searchQuery.toLowerCase(); result = result.filter(c => c.notation.toLowerCase().includes(q) || c.tags.some(t => t.toLowerCase().includes(q)) || c.author?.toLowerCase().includes(q) || c.customNote?.toLowerCase().includes(q)) }
+      if (filters.searchQuery.trim()) { const q = filters.searchQuery.toLowerCase(); result = result.filter(c => c.notation.toLowerCase().includes(q) || c.tags.some(t => t.toLowerCase().includes(q)) || c.creator?.toLowerCase().includes(q) || c.customNote?.toLowerCase().includes(q)) }
       if (filters.showOnlyFavorites) result = result.filter(c => favoriteIds.has(c.id))
       if (filters.showOnlyLearned) result = result.filter(c => learnedIds.has(c.id))
       if (filters.minDamage > 0) result = result.filter(c => (c.damage ?? 0) >= filters.minDamage)
@@ -155,8 +169,10 @@ export const useOverlayStore = create<OverlayStore>((set, get) => {
     },
     favoriteIds: new Set(),
     loadFavorites: async () => { const favs = await window.electronAPI.getFavorites(); set({ favoriteIds: new Set(favs) }) },
+    isFavorite: (id) => get().favoriteIds.has(id),
     toggleFavorite: async (id) => { const added = await window.electronAPI.toggleFavorite(id); set(state => { const next = new Set(state.favoriteIds); if (added) next.add(id); else next.delete(id); return { favoriteIds: next } }) },
     learnedIds: new Set(),
+    isLearned: (id) => get().learnedIds.has(id),
     toggleLearned: async (id) => { const learned = await window.electronAPI.toggleLearned(id); set(state => { const next = new Set(state.learnedIds); if (learned) next.add(id); else next.delete(id); return { learnedIds: next } }) },
     collapsed: false, toggleCollapse: () => { set((s) => ({ collapsed: !s.collapsed })); window.electronAPI.toggleCollapse() }, isHorizontal: false, setHorizontal: (v) => set({ isHorizontal: v }), opacity: 1, setOpacity: (v) => { set({ opacity: v }); window.electronAPI.setOpacity(v) },
     recentCombos: getInitialRecent(), showOnlyRecent: false, setShowOnlyRecent: (val) => set({ showOnlyRecent: val }), addRecentCombo: (combo) => { set((s) => { const filtered = s.recentCombos.filter(c => c.id !== combo.id); const newRecent = [combo, ...filtered].slice(0, 10); localStorage.setItem('t8_recent_combos', JSON.stringify(newRecent)); return { recentCombos: newRecent } }) },

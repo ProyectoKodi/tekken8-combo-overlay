@@ -1,4 +1,5 @@
 import * as cheerio from 'cheerio'
+import type { AnyNode } from 'domhandler'
 import type { Combo } from '../renderer/types/combo'
 
 const BASE_URL = 'https://tekken8combo.kagewebsite.com'
@@ -36,7 +37,7 @@ function parseCombosFromHtml(html: string, character: string): Combo[] {
 
 function parseComboEntry(
   $: cheerio.CheerioAPI,
-  el: cheerio.Element,
+  el: AnyNode,
   character: string,
   index: number
 ): Combo | null {

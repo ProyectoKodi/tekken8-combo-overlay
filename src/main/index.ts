@@ -24,10 +24,13 @@ function checkTekken(): void {
   })
 }
 
-function startWatcher(): void { watcherInterval = setInterval(checkTekken, 3000) }
+function startWatcher(): void {
+  stopWatcher(); // Stop any existing watcher first
+  watcherInterval = setInterval(checkTekken, 3000)
+}
+
 function stopWatcher(): void { if (watcherInterval) { clearInterval(watcherInterval); watcherInterval = null } }
 
-// Función centralizada para cambiar el estado del candado
 function toggleClickThrough(forceState?: boolean) {
   if (!mainWindow) return
   isIgnoringMouse = forceState !== undefined ? forceState : !isIgnoringMouse
@@ -43,6 +46,7 @@ function createWindow(): void {
     height: 600, // Tu tamaño preferido
     minWidth: 400, minHeight: 200,
     transparent: true, frame: false, alwaysOnTop: true, skipTaskbar: false, hasShadow: false, resizable: true,
+    backgroundColor: '#00000000',
     webPreferences: { preload, contextIsolation: true, nodeIntegration: false, sandbox: false },
   })
 
@@ -52,8 +56,12 @@ function createWindow(): void {
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' } })
 
-  if (process.env['ELECTRON_RENDERER_URL']) mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  else mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  if (process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.webContents.openDevTools({ mode: 'detach' })
+  } else {
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
 }
 
 app.whenReady().then(() => {

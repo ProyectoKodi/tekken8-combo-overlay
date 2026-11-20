@@ -26,10 +26,11 @@ declare global {
       getCustomNotes: () => Promise<Record<string, string>>
       exportProfile: () => Promise<{ ok: boolean; error?: string }>
       importProfile: () => Promise<{ ok: boolean; added?: number; error?: string }>
-      addCustomCombo: (c: Partial<Combo>) => Promise<{ ok: boolean }>
+      addCustomCombo: (c: Partial<Combo>) => Promise<{ ok: boolean; combo?: Combo; error?: string }>
       getCustomCombos: (character?: string) => Promise<Combo[]>
       deleteCustomCombo: (id: string) => Promise<{ ok: boolean }>
-      fetchYouTubeMeta: (url: string) => Promise<{ ok: boolean; title?: string }>
+      saveCustomCombos: (character: string, combos: Combo[]) => Promise<{ ok: boolean }>
+      fetchYouTubeMeta: (url: string) => Promise<{ ok: boolean; title?: string; uploader?: string; source?: string; error?: string }>
 
       openPractice: (combo: Combo) => void
       closePractice: () => void

@@ -20,15 +20,16 @@ export function openPracticeWindow(combo: Combo): void {
 
   practiceWindow = new BrowserWindow({
     width: screenW,
-    height: 45, 
+    height: 45,
     x: 0,
-    y: 0, 
+    y: 0,
     transparent: true,
     frame: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
     hasShadow: false,
+    backgroundColor: '#00000000',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

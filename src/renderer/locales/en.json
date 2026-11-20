@@ -39,6 +39,7 @@
     "sort_damage": "Highest damage",
     "sort_hits": "Most hits",
     "clear": "Clear",
+    "learned": "Learned",
     "tags": {
       "Heat": "Heat",
       "Wall": "Wall",

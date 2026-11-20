@@ -1,15 +1,12 @@
-<<<<<<< HEAD
-# Dependencies
+# Dependencias
 node_modules/
 
-# Build output
+# Compilados
 out/
 dist/
-
-# electron-vite cache
 .vite/
 
-# OS files
+# Archivos del sistema
 .DS_Store
 Thumbs.db
 
@@ -27,30 +24,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# electron-store data (user data, not source)
-# These live in %APPDATA% anyway, not the project folder
-
-# Environment
-.env
-.env.local
-.env.*.local
-=======
-# Dependencias
-node_modules/
-
-# Compilados
-dist/
-out/
-
-# Archivos del sistema
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-
 # Variables de entorno
 .env
 .env.local
->>>>>>> 5a681d02bdca7da2749d3a36ce8bd66154b92f21
+.env.*.local
+
+# Datos de usuario de electron-store
+# (viven en %APPDATA%, no en el proyecto)

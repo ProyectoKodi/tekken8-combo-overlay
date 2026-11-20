@@ -81,7 +81,7 @@ export default function ComboList() {
   }
 
   return (
-    <div ref={parentRef} className="flex-1 combo-scroll cursor-crosshair">
+    <div ref={parentRef} className="flex-1 min-h-0 combo-scroll cursor-crosshair">
       <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }} className="pt-1">
         {virtualizer.getVirtualItems().map((vItem) => {
           const listItem = items[vItem.index]

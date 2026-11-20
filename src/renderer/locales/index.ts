@@ -16,7 +16,7 @@ export const languageNames: Record<Language, string> = {
   pt: 'Português',
 }
 
-export function getTranslation(lang: Language, path: string, params?: Record<string, string>): string {
+export function getTranslation(lang: Language, path: string, params?: Record<string, string | number>): string {
   const keys = path.split('.')
   let current: any = locales[lang]
 
@@ -38,7 +38,7 @@ export function getTranslation(lang: Language, path: string, params?: Record<str
   let text = current
   if (params) {
     Object.entries(params).forEach(([key, val]) => {
-      text = text.replace(`{{${key}}}`, val)
+      text = text.replace(`{{${key}}}`, String(val))
     })
   }
   return text

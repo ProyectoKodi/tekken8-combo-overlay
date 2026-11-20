@@ -1,147 +1,82 @@
-<<<<<<< HEAD
-# Tekken 8 Combo Overlay
+# 🥋 Tekken 8 Combo Overlay
 
-A transparent, always-on-top desktop overlay for Tekken 8 that fetches combos directly from [tekken8combo.kagewebsite.com](https://tekken8combo.kagewebsite.com/) and displays them using proper SVG button notation — so you can study combos while you play.
-=======
-# 🥋 Tekken 8 Combo Overlay Pro (Ver. 3.3.1)
-
-Un overlay interactivo, ligero y seguro para Windows 11, diseñado para practicar combos de Tekken 8 mientras juegas. Extrae los combos directamente de la web de Kage y los muestra con la notación visual oficial, sin inyectar código en el juego (100% libre de baneos).
->>>>>>> 5a681d02bdca7da2749d3a36ce8bd66154b92f21
+Overlay de escritorio para **Tekken 8** (Windows) que muestra combos sobre el juego y los renderiza con la notación visual oficial (iconos SVG de dirección y botones).
 
 ![Electron](https://img.shields.io/badge/Electron-36BCF7?style=flat&logo=electron&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
 
-<<<<<<< HEAD
-## Features
+## ✨ Características
 
-- 🎮 **All 40 characters** — including Fahkumram, Miary-Zo and Jack-8
-- 🖼️ **SVG notation rendering** — every input token shown as a proper button image (holds, just-frames, slides, delays, brackets, Heat Dash and more)
-- ⭐ **Favorites** — star combos to pin them to the top; persists across sessions
-- 🏋️ **Practice mode** — click any combo to open a step-by-step practice window
-- 🏷️ **Tags & filters** — filter by Heat, Wall, Rage, CH, stage requirements and more
-- 🔄 **Auto-cache** — combos are cached for 24 hours so the overlay loads instantly
-- 📐 **Horizontal strip mode** — stretch to a thin bar across the top/bottom of your screen
-- 🎨 **Transparent & click-through** — passes mouse clicks to the game when not in use
+- **📚 Base de combos:** extrae los combos de [tekken8combo.kagewebsite.com](https://tekken8combo.kagewebsite.com/) con caché de 24 h.
+- **🎨 Notación visual:** convierte texto (`d/f,2 ► b,1,4`) en los iconos oficiales, incluidos holds, just-frames, slides, delays y Heat Dash.
+- **🖥️ Overlay flotante:** ventana transparente, sin marco y *always-on-top*, pensada para "pantalla completa sin bordes".
+- **🖱️ Click-through:** el botón de candado (o **F8**) deja pasar los clics al juego.
+- **🔍 Filtros:** por personaje, dificultad, daño mínimo, propiedades (Heat, Pared, Rage, Counter…) y estado.
+- **⭐ Favoritos y ✔ Aprendidos:** se guardan por combo y persisten entre sesiones.
+- **⏱️ Recientes:** los últimos 10 combos practicados.
+- **✏️ Notas personales:** una nota de texto por combo.
+- **👁️ Modo Streamer** (fondo transparente) y **🏆 Modo Torneo** (oculta botones de edición).
+- **📏 Modo Compacto** y **modo horizontal** (barra fina sobre el juego).
+- **🌍 Multiidioma:** español, inglés y portugués.
+- **🎨 Temas:** dorado, azul, rojo, verde y rosa.
+- **🔄 Actualización automática** vía electron-updater (releases de GitHub).
+- **📤 Exportar/Importar** perfil y combos personalizados.
 
-## Requirements
+## 🚀 Instalación
 
-- [Node.js](https://nodejs.org/) **v18 or later**
-- npm (comes with Node.js)
+1. Descarga el instalador `Tekken8ComboOverlay-Setup-X.X.X.exe` de la sección [Releases](https://github.com/ProyectoKodi/tekken8-combo-overlay/releases).
+2. Ejecútalo (no requiere permisos de administrador).
+3. En Tekken 8, activa **"Pantalla completa sin bordes"** en las opciones gráficas.
+4. Abre el overlay y pulsa **F9** para mostrarlo.
 
-## How to run
+> ⚠️ **La ventana arranca oculta a propósito.** Se muestra sola cuando detecta `TekkenGame-Win64-Shipping.exe` en ejecución; si abres la app sin el juego, parece que no ha pasado nada. Pulsa **F9** para forzarla.
 
-```bash
-# 1. Extract the ZIP (or clone the repo)
-
-# 2. Open a terminal in the project folder and install dependencies
-npm install
-
-# 3. Start the overlay
-npm run dev
-```
-
-The overlay window will appear. Press **F9** (default hotkey) to show/hide it while in-game.
-
-## Building a standalone .exe
-
-To build a Windows installer you can share without needing Node.js:
-
-```bash
-npm run dist
-```
-
-The installer will be in the `dist/` folder.
-
-## Controls
-
-| Action | How |
-|--------|-----|
-| Move overlay | Drag the title bar |
-| Show / hide | `F9` hotkey |
-| Collapse to bar | Click `—` button |
-| Horizontal strip | Click `⇔` button |
-| Practice a combo | Click any combo card |
-| Star a combo | Click `☆` on the card |
-| Refresh combos | Click `↻ Refresh` |
-
-## Tech stack
-
-- **Electron** + **electron-vite**
-- **React 18** + **TypeScript**
-- **TailwindCSS 3**
-- **Zustand** (state management)
-- **Cheerio** (HTML scraping in main process)
-- **@tanstack/react-virtual** (virtualised combo list)
-- **electron-store** (favorites + combo cache)
-=======
-## ✨ Características Principales
-
-*   **📚 Base de Datos de Combos:** Extrae automáticamente más de 2,000 combos desde [Kage Website](https://tekken8combo.kagewebsite.com/).
-*   **🎨 Notación Visual:** Convierte texto (`d/f,2`) en los iconos oficiales del juego.
-*   **🖥️ Overlay Flotante:** Ventana transparente que se superpone al juego. Funciona en "Pantalla completa sin bordes".
-*   **🖱️ Click-Through:** Botón de candado para que los clics del ratón pasen directamente al juego.
-*   **🔍 Filtros Avanzados:** Filtra por personaje, dificultad, daño mínimo, propiedades (Heat, Pared, Counter) y estado.
-*   **⭐ Favoritos y ✔️ Aprendidos:** Guarda tus combos favoritos y marca los que ya dominas. Todo se guarda **por personaje**.
-*   **⏱️ Historial de Recientes:** Accede rápidamente a los últimos 10 combos practicados.
-*   **✏️ Notas Personales:** Añade un cuadro de texto a cada combo con tus propios trucos.
-*   **👁️ Modo Streamer:** Vuelve el fondo del overlay 100% transparente.
-*   **🏆 Modo Torneo:** Oculta todos los botones de edición.
-*   **🌍 Multiidioma:** Español, Inglés y Portugués.
-*   **🎨 Temas de Color:** Dorado, Azul, Rojo, Verde, Rosa.
-*   **📏 Modo Compacto:** Oculta la barra de búsqueda y filtros.
-*   **🔄 Actualización Automática:** La app detecta nuevas versiones y se actualiza sola.
-*   **📤 Exportar/Importar:** Haz copias de seguridad de tus perfiles completos.
-
-## 🚀 Instalación Rápida (Windows 11)
-
-1.  Ve a la sección de **[Releases](https://github.com/ProyectoKodi/tekken8-combo-overlay/releases)** de este repositorio.
-2.  Descarga el último archivo `Tekken8ComboOverlay-Setup-X.X.X.exe`.
-3.  Ejecuta el instalador y sigue las instrucciones (no requiere permisos de administrador).
-4.  Abre Tekken 8 y asegúrate de tenerlo en **"Pantalla completa sin bordes"** (Borderless Windowed) en las opciones gráficas.
-5.  Abre el overlay desde el menú Inicio y ¡a practicar!
-
-## 🎮 Controles y Atajos de Teclado
-
-Puedes usar el ratón para navegar por la interfaz, pero también tienes **atajos de teclado** para no soltar el mando:
+## 🎮 Controles
 
 | Tecla | Acción |
 | :--- | :--- |
-| **F9** | Mostrar / Ocultar el Overlay por completo. |
-| **F10** | Colapsar / Expandir la ventana a su mínima expresión. |
-| **F8** | **Bloquear / Desbloquear el ratón.** Si el candado está cerrado, los clics pasan al juego. Pulsa F8 para recuperar el ratón. |
-| **F1** | Abrir rápidamente el formulario para **Añadir un Combo**. |
-| **F3** | Alternar el **Modo Streamer** (fondo transparente). |
+| **F9** | Mostrar / ocultar el overlay |
+| **F10** | Colapsar / expandir la ventana |
+| **F8** | Bloquear / desbloquear el ratón (click-through) |
+| **F1** | Abrir el formulario de "Añadir combo" |
+| **F3** | Alternar Modo Streamer |
 
-**Controles con el ratón (Haz clic en el icono ❓ dentro de la app para ver esta guía):**
-*   **🔒/🔓 (Candado):** Bloquear/desbloquear clics.
-*   **👁️ (Ojo):** Modo Streamer.
-*   **🏆 (Trofeo):** Modo Torneo.
-*   **📏 (Regla):** Modo Compacto.
-*   **⭐ (Estrella):** Añadir a favoritos.
-*   **○ / ✔:** Marcar como combo aprendido.
-*   **📋:** Copiar la notación.
-*   **💬:** Copiar el combo para Discord.
-*   **✏️:** Añadir una nota personal.
+En la interfaz: 🔒 candado, 👁️ streamer, 🏆 torneo, 📏 compacto, ⟺ horizontal, ⭐ favorito, ○/✔ aprendido, 📋 copiar notación, 💬 copiar para Discord, ✏️ nota.
 
-## 🛠️ Para Desarrolladores (Compilar desde cero)
+## 🛠️ Desarrollo
+
+Requisitos: **Node.js 22.6+** (las pruebas usan el type-stripping nativo de Node) y npm.
 
 ```bash
-# 1. Clona el repositorio
-git clone https://github.com/ProyectoKodi/tekken8-combo-overlay.git
+npm install        # dependencias
+npm run dev        # Electron + Vite en modo desarrollo
+npm run typecheck  # TypeScript en los dos proyectos (renderer y node)
+npm test           # pruebas de la lógica pura (node:test)
+npm run build      # compila main, preload y renderer en out/
+npm run dist       # compila y genera el instalador NSIS en dist/
+```
 
-# 2. Entra a la carpeta
-cd tekken8-combo-overlay
+### Estructura
 
-# 3. Instala las dependencias
-npm install
+```
+src/
+├── main/        # proceso principal: ventana, IPC, scraping, caché, hotkeys
+├── preload/     # puente contextBridge -> window.electronAPI
+├── renderer/    # React + Zustand + Tailwind
+│   ├── components/
+│   ├── store/   # estado global (overlayStore)
+│   ├── utils/   # notationParser (texto -> iconos)
+│   └── locales/ # es / en / pt
+└── shared/      # código compartido (comboHash)
+tests/           # pruebas con node:test
+```
 
-# 4. (Opcional) Descarga yt-dlp.exe y colócalo en la carpeta resources/
-#    https://github.com/yt-dlp/yt-dlp/releases/latest
+### Stack
 
-# 5. Ejecuta en modo desarrollo
-npm run dev
+Electron 31 · electron-vite · React 18 · TypeScript 5 · TailwindCSS 3 · Zustand · Cheerio (scraping) · @tanstack/react-virtual · electron-store · electron-updater.
 
-# 6. Genera el instalador .exe
-npm run dist
->>>>>>> 5a681d02bdca7da2749d3a36ce8bd66154b92f21
+### Notas
+
+- `resources/yt-dlp.exe` se empaqueta como recurso extra para futuras descargas de vídeo; hoy no se usa en el código.
+- El perfil de rango (RankTracker) es de edición manual; los scrapers de Wavu Wank / EWGF.gg están disponibles pero dependen de servicios de terceros.

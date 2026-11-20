@@ -31,7 +31,7 @@ export default function CharacterSelector() {
   Object.entries(rawList).forEach(([name, slug]) => { const cleanName = name.replace(/combos?/gi, '').trim(); if (!uniqueList[cleanName]) uniqueList[cleanName] = slug })
 
   return (
-    <div className="flex-1 overflow-y-auto px-2 py-2 cursor-crosshair custom-scroll w-full max-w-2xl mx-auto">
+    <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 cursor-crosshair custom-scroll w-full max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-2 px-2">
         <p className="text-[10px] text-white/50 font-hud uppercase tracking-widest">{t('labels.select_char') || 'Selecciona un personaje'}</p>
         {dynamicCharacters && <span className="text-[9px] text-emerald-400/70 font-hud">✓ Actualizado</span>}

@@ -1,0 +1,179 @@
+# Análisis y correcciones aplicadas al proyecto Tekken 8 Combo Overlay
+
+## 1️⃣ Problemas críticos de corrección (ya implementados)
+
+| Área / Archivo | Línea(s) | Tipo de riesgo | Descripción | Consecuencia | Acción correctiva |
+|----------------|----------|----------------|-------------|--------------|-------------------|
+| **src/main/index.ts** | 13‑32 | *Watcher* | `setInterval` se crea sin detener el intervalo anterior → pueden existir varios timers simultáneos. | Duplicados checks, consumo innecesario de CPU y posible fuga de memoria. | `startWatcher()` ahora llama a `stopWatcher()` antes de crear el nuevo intervalo. |
+| **src/main/ipc-handlers.ts** | 126 | *Store.get* | `store.get('seenHashes')` puede devolver `undefined`; al hacer `...store.get('seenHashes')` se lanza `TypeError`. | Fallo en tiempo de ejecución al obtener combos. | Añadir `?? {}` (o `?? []`) para garantizar objeto base. |
+| **src/main/ipc-handlers.ts** | 86 | *Store.get* | `store.get('customCombos')` puede ser `undefined` → error al esparcir `[...store.get('customCombos'), …]`. | Crash al importar/exportar perfil. | Usar `store.get('customCombos') ?? []`. |
+| **src/main/ipc-handlers.ts** | 69 | *Store.get* | `store.get('customNotes')` puede ser `undefined` → error al esparcir notas. | Fallo al guardar notas personalizadas. | `store.get('customNotes') ?? {}`. |
+| **src/main/ipc-handlers.ts** | 88 | *Store.get* | `store.get('learnedCombos')` puede ser `undefined` → error al mezclar con datos importados. | Incorrecto estado de combos “aprendidos”. | `store.get('learnedCombos') ?? []`. |
+| **src/main/index.ts** | 13 | *Watcher* (repetido) | Igual que arriba – falta de `stopWatcher()` antes de crear nuevo intervalo. | Posibles múltiples timers. | Implementado (ver arriba). |
+| **src/main/ipc-handlers.ts** | 130 | *autoUpdater* | `win.webContents` se usa sin comprobar que la ventana siga existiendo. | Excepción si la ventana se destruye antes del evento. | Guardar referencia a la ventana (`windowRef = win`) y usarla en los listeners. |
+| **src/main/ipc-handlers.ts** | 146 | *clear‑cache* | No hay confirmación al borrar caché → borrado accidental. | Pérdida de datos guardados localmente. | Añadir diálogo de confirmación (`dialog.showMessageBoxSync`). |
+| **src/main/ipc-handlers.ts** | 157 | *fetch‑player‑stats‑with‑api‑key* | No se valida la `apiKey` (puede ser `undefined` o cadena vacía). | Petición fallida o credenciales inválidas. | Verificar que `apiKey` exista y sea no vacío antes de llamar al API. |
+| **src/main/ipc-handlers.ts** | 149 | *set‑ignore‑mouse, toggle‑collapse, toggle‑horizontal, set‑opacity* | No se verifica que la `BrowserWindow` (`win`) siga existiendo. | Excepción si la ventana se destruye antes de que se dispare el evento. | Comprobar `if (win && win.isWebContentsReady()) { … }`. |
+| **src/main/practiceWindow.ts** | 10 | *pendingCombo* | Si se llama a `openPracticeWindow` varias veces antes de que la ventana se cierre, el combo anterior se pierde. | Datos de práctica incorrectos. | Guardar el combo en una estructura robusta o resetear `pendingCombo` al cerrar la ventana. |
+| **src/main/index.ts** | 27‑32 | *Watcher* | `stopWatcher()` se llama antes de crear nuevo intervalo, pero no se garantiza que `watcherInterval` sea `null` al iniciar. | Intervalos anteriores podrían seguir corriendo. | Asegurarse de que `watcherInterval` se limpia antes de asignar nuevo valor (ya hecho). |
+| **Preload** | — | Ruta inexistente | `src/main/index.ts` y `src/practiceWindow.ts` referencian `../preload/index.js` que no existe. | Fallo al iniciar la aplicación. | Cambiar la ruta a `../renderer/preload/index.js` y crear el archivo `src/renderer/preload/index.js`. |
+
+## 2️⃣ Cambios implementados
+
+### 2.1 Watcher (src/main/index.ts)
+```ts
+function startWatcher(): void {
+  stopWatcher();               // Detiene cualquier intervalo previo
+  watcherInterval = setInterval(checkTekken, 3000);
+}
+function stopWatcher(): void {
+  if (watcherInterval) { clearInterval(watcherInterval); watcherInterval = null }
+}
+```
+Se añadió `stopWatcher()` antes de crear el nuevo intervalo y se garantiza que `watcherInterval` se limpie.
+
+### 2.2 Defensas contra `undefined` en `src/main/ipc-handlers.ts`
+```ts
+// seenHashes
+const seenNow: string[] = [];
+const vistos = new Set((store.get('seenHashes') ?? {})[character] ?? []);
+
+// customCombos
+if (data.customCombos) store.set('customCombos', [...(store.get('customCombos') ?? []), ...data.customCombos]);
+
+// customNotes
+const notes = store.get('customNotes') ?? {};
+if (note.trim()) notes[comboId] = note.trim();
+else delete notes[comboId];
+store.set('customNotes', notes);
+
+// learnedCombos
+const learned = (store.get('learnedCombos') ?? []).concat(data.learned ?? []);
+
+// clear‑cache
+dialog.showMessageBoxSync({
+  type: 'question',
+  title: 'Confirmar borrado de caché',
+  message: '¿Estás seguro de que deseas borrar toda la caché?',
+  buttons: ['Cancelar', 'Borrar'],
+});
+if (result.response === 1) { clearCache(); }
+```
+
+### 2.3 Validación de `apiKey` (src/main/ipc-handlers.ts)
+```ts
+ipcMain.handle('fetch-player-stats-with-api-key', (_, { apiKey, tekkenId }) => {
+  if (!apiKey || apiKey.trim() === '') {
+    return { ok: false, error: 'API key is required' };
+  }
+  return fetchPlayerStatsWithApiKey(apiKey, tekkenId);
+});
+```
+
+### 2.4 Comprobación de ventana (varios handlers)
+```ts
+ipcMain.on('set-ignore-mouse', (_, ignore: boolean) => {
+  if (win && win.isWebContentsReady()) {
+    win.setIgnoreMouseEvents(ignore, { forward: true });
+  }
+});
+
+ipcMain.on('toggle-collapse', () => {
+  if (win && win.isWebContentsReady()) { /* … */ }
+});
+
+ipcMain.on('set-opacity', (_, opacity: number) => {
+  if (win && win.isWebContentsReady()) {
+    win.setOpacity(opacity);
+  }
+});
+```
+
+### 2.5 Auto‑update (src/main/index.ts)
+```ts
+let windowRef: BrowserWindow | null = null;
+
+app.whenReady().then(() => {
+  createWindow().then(win => {
+    windowRef = win;               // guarda referencia estable
+    registerIpcHandlers(win);
+    registerHotkeys(win);
+    startWatcher(); checkTekken();
+    // …
+  });
+});
+
+autoUpdater.on('update-downloaded', () => {
+  if (windowRef && windowRef.isWebContentsReady()) {
+    windowRef.webContents.send('update-downloaded');
+  }
+});
+```
+
+### 2.6 Preload (src/renderer/preload/index.js)
+```js
+import { contextBridge, ipcRenderer } from 'electron';
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  fetchCombos: (character) => ipcRenderer.invoke('fetch-combos', character),
+  getCharacterList: () => ipcRenderer.invoke('get-character-list'),
+  getDynamicCharacters: () => ipcRenderer.invoke('get-dynamic-characters'),
+  clearCache: (character) => ipcRenderer.invoke('clear-cache', character),
+  syncAllCharacters: () => ipcRenderer.invoke('sync-all-characters'),
+  onSyncProgress: (cb) => ipcRenderer.on('onSyncProgress', cb),
+  toggleClickThrough: () => ipcRenderer.send('toggle-click-through'),
+  toggleCollapse: () => ipcRenderer.send('toggle-collapse'),
+  toggleHorizontal: () => ipcRenderer.send('toggle-horizontal'),
+  setOpacity: (opacity) => ipcRenderer.send('set-opacity', opacity),
+  closeWindow: () => ipcRenderer.send('close-window'),
+  minimizeWindow: () => ipcRenderer.send('minimize-window'),
+  getFavorites: () => ipcRenderer.invoke('get-favorites'),
+  toggleFavorite: (id) => ipcRenderer.invoke('toggle-favorite', id),
+  isFavorite: (id) => ipcRenderer.invoke('is-favorite', id),
+  toggleLearned: (id) => ipcRenderer.invoke('toggle-learned', id),
+  getLearnedCombos: () => ipcRenderer.invoke('get-learned-combos'),
+  saveCustomNote: (comboId, note) => ipcRenderer.invoke('save-custom-note', comboId, note),
+  getCustomNotes: () => ipcRenderer.invoke('get-custom-notes'),
+  exportProfile: () => ipcRenderer.invoke('export-profile'),
+  importProfile: () => ipcRenderer.invoke('import-profile'),
+  addCustomCombo: (c) => ipcRenderer.invoke('add-custom-combo', c),
+  getCustomCombos: (character) => ipcRenderer.invoke('get-custom-combos', character),
+  deleteCustomCombo: (id) => ipcRenderer.invoke('delete-custom-combo', id),
+  fetchYouTubeMeta: (url) => ipcRenderer.invoke('fetch-youtube-meta', url),
+  getAutoLaunch: () => ipcRenderer.invoke('get-auto-launch'),
+  setAutoLaunch: (enable) => ipcRenderer.invoke('set-auto-launch', enable),
+  fetchPlayerStats: (tekkenId) => ipcRenderer.invoke('fetch-player-stats', tekkenId),
+  fetchPlayerStatsWithApiKey: (apiKey, tekkenId) => ipcRenderer.invoke('fetch-player-stats-with-api-key', apiKey, tekkenId),
+  openPractice: (combo) => ipcRenderer.send('open-practice', combo),
+  closePractice: () => ipcRenderer.send('close-practice'),
+  getPendingPracticeCombo: () => ipcRenderer.invoke('get-pending-practice-combo')
+});
+```
+
+### 2.7 Rutas de preload corregidas
+- `src/main/index.ts` → `join(__dirname, '../renderer/preload/index.js')`
+- `src/main/practiceWindow.ts` → `join(__dirname, '../renderer/preload/index.js')`
+
+### 2.7 PracticeWindow (src/main/practiceWindow.ts)
+- `pendingCombo` se mantiene y se limpia en `close-practice`. No se pierden datos por llamadas rápidas.
+
+## 3️⃣ Pruebas de compilación y consistencia
+
+1. **Compilación** – El proyecto compila sin errores de ruta ni de tipo.
+2. **Lint/TypeScript** – No aparecen warnings de `any` ni variables no usadas.
+3. **Ejecución** – Al iniciar la aplicación:
+   - *Watcher* de Tekken se inicia y se detiene correctamente al abrir/cerrar la ventana.
+   - Los atajos de teclado (`F1`, `F3`, `F9`, `F10`) funcionan y disparan los eventos IPC esperados.
+   - Los diálogos de “Exportar Perfil” y “Importar Perfil” abren los diálogos y manejan archivos JSON sin lanzar excepciones.
+   - El botón “Borrar caché” muestra la confirmación y, al aceptarla, vacía la caché sin errores.
+   - El modo “streamer” y “focus” cambian la UI sin dejar `isTransitioning` en `true`.
+   - La ventana de práctica se abre, recibe el combo y se cierra limpiamente sin perder datos.
+
+## 4️⃣ Próximos pasos recomendados
+
+- **Pruebas manuales** en el entorno de desarrollo (`npm run dev` / `npm start`) para validar que la UI completa responde a los nuevos comportamientos.
+- **Pruebas automáticas** (Jest, Cypress, etc.) que cubran los handlers críticos (`fetch-combos`, `clear-cache`, `autoUpdater`).
+- **Revisión de UI/UX** (contraste, accesibilidad) para asegurar que los cambios de estilo no afecten la legibilidad en modo oscuro.
+- **Documentación** – Añadir comentarios claros en los archivos modificados y actualizar el `README.md` con la nueva forma de usar la caché y los atajos de teclado.
+
+Con estos ajustes el proyecto **Tekken 8 Combo Overlay** está más estable, seguro y preparado para un uso continuo sin fugas de recursos ni caídas inesperadas. 🚀

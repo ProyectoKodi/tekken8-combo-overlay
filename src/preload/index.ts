@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   addCustomCombo: (c: Partial<Combo>) => ipcRenderer.invoke('add-custom-combo', c),
   getCustomCombos: (character?: string) => ipcRenderer.invoke('get-custom-combos', character),
   deleteCustomCombo: (id: string) => ipcRenderer.invoke('delete-custom-combo', id),
+  saveCustomCombos: (character: string, combos: Combo[]) => ipcRenderer.invoke('save-custom-combos', character, combos),
   fetchYouTubeMeta: (url: string) => ipcRenderer.invoke('fetch-youtube-meta', url),
   openPractice: (combo: Combo) => ipcRenderer.send('open-practice', combo),
   closePractice: () => ipcRenderer.send('close-practice'),
