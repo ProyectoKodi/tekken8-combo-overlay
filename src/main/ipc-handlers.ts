@@ -221,9 +221,6 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('get-dynamic-characters', async () => {
     return { ...CHARACTER_SLUGS };
   });
-  ipcMain.handle('sync-all-characters', async () => {
-    return { total: 0, nuevos: 0 };
-  });
   ipcMain.handle('add-custom-combo', (_, data: Partial<Combo>) => {
     const list = store.get('customCombos') ?? [];
     const newCombo: Combo = {
