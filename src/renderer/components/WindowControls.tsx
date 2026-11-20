@@ -7,8 +7,8 @@ interface Props { compact?: boolean }
 
 export default function WindowControls({ compact }: Props) {
   const { 
-    collapsed, toggleCollapse, opacity, setOpacity, selectedCharacter, clearCharacter, 
-    isHorizontal, themeColor, setThemeColor, language, setLanguage, t,
+    opacity, setOpacity, selectedCharacter, clearCharacter, 
+    themeColor, setThemeColor, language, setLanguage, t,
     isClickThrough, toggleClickThrough, isCompactMode, toggleCompactMode,
     isTournamentMode, toggleTournamentMode, isStreamerMode, toggleStreamerMode
   } = useOverlayStore()
@@ -18,14 +18,12 @@ export default function WindowControls({ compact }: Props) {
   useEffect(() => { window.electronAPI.getAutoLaunch().then(setAutoLaunchState) }, [])
 
   const handleAutoLaunch = async () => { const next = !autoLaunch; await window.electronAPI.setAutoLaunch(next); setAutoLaunchState(next) }
-  const handleHorizontalToggle = () => window.electronAPI.toggleHorizontal()
   const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => setThemeColor(e.target.value as ThemeColor)
   const handleLangChange = (e: React.ChangeEvent<HTMLSelectElement>) => setLanguage(e.target.value as Language)
 
   if (compact) {
     return (
       <div className="flex items-center gap-1 no-drag flex-shrink-0">
-        <button onClick={handleHorizontalToggle} className="w-4 h-4 flex items-center justify-center rounded hover:bg-overlay-accent/20 text-overlay-accent/70 hover:text-overlay-accent transition-colors text-[10px]" title="Volver">⊟</button>
         <button onClick={() => window.electronAPI.minimizeWindow()} className="w-4 h-4 flex items-center justify-center rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors text-[10px]">–</button>
         <button onClick={() => window.electronAPI.closeWindow()} className="w-4 h-4 flex items-center justify-center rounded hover:bg-red-500/70 text-white/40 hover:text-white transition-colors text-[10px]">✕</button>
       </div>
@@ -76,8 +74,6 @@ export default function WindowControls({ compact }: Props) {
 
           <button onClick={handleAutoLaunch} className={`text-[8px] font-hud px-1 py-0.5 rounded border transition-colors ${autoLaunch ? 'border-overlay-accent/60 bg-overlay-accent/20 text-overlay-accent' : 'border-white/10 text-white/25 hover:text-white/60 hover:border-white/25'}`} title="Inicio automático">⚡</button>
           <input type="range" min={0.2} max={1} step={0.05} value={opacity} onChange={(e) => setOpacity(parseFloat(e.target.value))} className="w-10 h-1 accent-overlay-accent cursor-pointer" title="Opacidad" />
-          <button onClick={handleHorizontalToggle} className={`w-5 h-4 flex items-center justify-center rounded border transition-colors text-[9px] font-bold ${isHorizontal ? 'border-overlay-accent/60 bg-overlay-accent/20 text-overlay-accent' : 'border-white/15 hover:border-overlay-accent/40 text-white/40 hover:text-overlay-accent'}`} title="Modo horizontal">⟺</button>
-          <button onClick={toggleCollapse} className="w-4 h-4 flex items-center justify-center rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors text-[10px]" title="Colapsar">{collapsed ? '▼' : '▲'}</button>
           <button onClick={() => window.electronAPI.minimizeWindow()} className="w-4 h-4 flex items-center justify-center rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors text-[10px]">–</button>
           <button onClick={() => window.electronAPI.closeWindow()} className="w-4 h-4 flex items-center justify-center rounded hover:bg-red-500/70 text-white/50 hover:text-white transition-colors text-[10px]">✕</button>
         </div>

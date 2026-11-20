@@ -42,10 +42,6 @@ interface OverlayStore {
   learnedIds: Set<string>
   isLearned: (id: string) => boolean
   toggleLearned: (id: string) => Promise<void>
-  collapsed: boolean
-  toggleCollapse: () => void
-  isHorizontal: boolean
-  setHorizontal: (v: boolean) => void
   opacity: number
   setOpacity: (v: number) => void
   recentCombos: Combo[]
@@ -166,7 +162,7 @@ export const useOverlayStore = create<OverlayStore>((set, get) => {
     learnedIds: new Set(),
     isLearned: (id) => get().learnedIds.has(id),
     toggleLearned: async (id) => { const learned = await window.electronAPI.toggleLearned(id); set(state => { const next = new Set(state.learnedIds); if (learned) next.add(id); else next.delete(id); return { learnedIds: next } }) },
-    collapsed: false, toggleCollapse: () => { set((s) => ({ collapsed: !s.collapsed })); window.electronAPI.toggleCollapse() }, isHorizontal: false, setHorizontal: (v) => set({ isHorizontal: v }), opacity: 1, setOpacity: (v) => { set({ opacity: v }); window.electronAPI.setOpacity(v) },
+    opacity: 1, setOpacity: (v) => { set({ opacity: v }); window.electronAPI.setOpacity(v) },
     recentCombos: getInitialRecent(), showOnlyRecent: false, setShowOnlyRecent: (val) => set({ showOnlyRecent: val }), addRecentCombo: (combo) => { set((s) => { const filtered = s.recentCombos.filter(c => c.id !== combo.id); const newRecent = [combo, ...filtered].slice(0, 10); localStorage.setItem('t8_recent_combos', JSON.stringify(newRecent)); return { recentCombos: newRecent } }) },
     isFocusMode: false, toggleFocusMode: () => set((s) => ({ isFocusMode: !s.isFocusMode })), themeColor: initialTheme, setThemeColor: (color) => { applyTheme(color); set({ themeColor: color }) }, dynamicCharacters: null, loadDynamicCharacters: async () => { try { const chars = await window.electronAPI.getDynamicCharacters(); if (chars && Object.keys(chars).length > 0) set({ dynamicCharacters: chars }) } catch (e) {} }, language: getInitialLang(), setLanguage: (lang) => { localStorage.setItem('t8_lang', lang); set({ language: lang }) }, t: (path, params) => getTranslation(get().language, path, params),
 

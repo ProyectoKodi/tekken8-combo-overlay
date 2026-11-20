@@ -22,7 +22,6 @@ export default function HelpModal({ onClose }: { onClose: () => void }) {
             <ul className="space-y-1.5">
               <li className="flex gap-2 items-start"><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono text-white border border-white/20">F8</kbd> <span>{t('help.hotkey_f8')}</span></li>
               <li className="flex gap-2 items-start"><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono text-white border border-white/20">F9</kbd> <span>{t('help.hotkey_f9')}</span></li>
-              <li className="flex gap-2 items-start"><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono text-white border border-white/20">F10</kbd> <span>{t('help.hotkey_f10')}</span></li>
               <li className="flex gap-2 items-start"><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono text-white border border-white/20">F1</kbd> <span>{t('help.hotkey_f1')}</span></li>
               <li className="flex gap-2 items-start"><kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px] font-mono text-white border border-white/20">F3</kbd> <span>{t('help.hotkey_f3')}</span></li>
             </ul>

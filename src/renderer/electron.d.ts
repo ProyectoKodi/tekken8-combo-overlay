@@ -11,8 +11,6 @@ declare global {
       onSyncProgress: (cb: (p: any) => void) => () => void
 
       toggleClickThrough: () => void
-      toggleCollapse: () => void
-      toggleHorizontal: () => void
       setOpacity: (opacity: number) => void
       closeWindow: () => void
       minimizeWindow: () => void
@@ -42,8 +40,6 @@ declare global {
       fetchPlayerStats: (tekkenId: string) => Promise<any>
       fetchPlayerStatsWithApiKey: (apiKey: string, tekkenId?: string) => Promise<any>
 
-      onHotkeyToggle: (cb: () => void) => () => void
-      onHorizontalChanged: (cb: (isHorizontal: boolean) => void) => () => void
       onPracticeCombo: (cb: (combo: Combo) => void) => () => void
       onHotkeyClickThrough: (cb: (isIgnoring: boolean) => void) => () => void
       onHotkeyAddCombo: (cb: () => void) => () => void

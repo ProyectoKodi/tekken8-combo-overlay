@@ -5,7 +5,6 @@ import SearchBar from './components/SearchBar'
 import CharacterSelector from './components/CharacterSelector'
 import FilterBar from './components/FilterBar'
 import ComboList from './components/ComboList'
-import ComboListHorizontal from './components/ComboListHorizontal'
 import PracticeView from './components/PracticeView'
 import AddComboForm from './components/AddComboForm'
 import SyncAllButton from './components/SyncAllButton'
@@ -15,15 +14,12 @@ import RankTracker from './components/RankTracker'
 const isPracticeMode = new URLSearchParams(window.location.search).get('mode') === 'practice'
 
 export default function App() {
-  const { selectedCharacter, collapsed, toggleCollapse, isHorizontal, setHorizontal, loadFavorites, showOnlyRecent, setShowOnlyRecent, isFocusMode, toggleFocusMode, isCompactMode, isStreamerMode, t, setClickThrough, toggleStreamerMode } = useOverlayStore()
-  const [isTransitioning, setIsTransitioning] = useState(false)
+  const { selectedCharacter, loadFavorites, showOnlyRecent, setShowOnlyRecent, isFocusMode, toggleFocusMode, isCompactMode, isStreamerMode, t, setClickThrough, toggleStreamerMode } = useOverlayStore()
   const [showAdd, setShowAdd] = useState(false)
 
   if (isPracticeMode) return <PracticeView />
 
-  useEffect(() => { const unlisten = window.electronAPI.onHotkeyToggle(() => toggleCollapse()); return () => { if (typeof unlisten === 'function') unlisten() } }, [toggleCollapse])
   useEffect(() => { loadFavorites() }, [loadFavorites])
-  useEffect(() => { const unlisten = window.electronAPI.onHorizontalChanged((val) => { setIsTransitioning(true); setTimeout(() => { setHorizontal(val); setIsTransitioning(false) }, 100) }); return () => { if (typeof unlisten === 'function') unlisten() } }, [setHorizontal])
 
   useEffect(() => {
     const unlisten = window.electronAPI.onHotkeyClickThrough((isIgnoring) => { setClickThrough(isIgnoring) })
@@ -36,27 +32,8 @@ export default function App() {
     return () => { unAdd(); unStreamer() }
   }, [toggleStreamerMode])
 
-  if (collapsed) return <div className="h-full flex items-center cursor-crosshair"><WindowControls /></div>
-
-  const transitionClass = isTransitioning ? 'opacity-0 transition-opacity duration-100' : 'opacity-100 transition-opacity duration-150'
+  const transitionClass = 'opacity-100 transition-opacity duration-150'
   const containerBgClass = 'bg-transparent'
-
-  if (isHorizontal) {
-    return (
-      <div className={`h-full flex flex-col ${transitionClass} cursor-crosshair ${containerBgClass}`}>
-        <UpdateBanner />
-        <div className="drag-region flex items-center gap-2 px-4 py-1.5 border-b border-white/5 bg-black/60">
-           <span className="text-[11px] font-hud font-bold text-overlay-accent tracking-widest uppercase no-drag">{t('app.title')}</span>
-           {selectedCharacter && (<><span className="text-white/20 text-xs">|</span><span className="text-xs font-hud font-semibold text-white/80 no-drag">{selectedCharacter}</span><button onClick={() => useOverlayStore.getState().clearCharacter()} className="text-[9px] text-white/30 hover:text-white/60 no-drag">✕</button></>)}
-           {!isFocusMode && <div className="flex-1 no-drag"><SearchBar compact /></div>}
-           {isFocusMode && <div className="flex-1 text-right no-drag"><RankTracker compact /></div>}
-           <WindowControls compact />
-        </div>
-        {selectedCharacter && !isFocusMode && <div className="border-b border-white/5 bg-black/40"><FilterBar compact /></div>}
-        {selectedCharacter ? <ComboListHorizontal /> : <div className="flex-1 flex items-center justify-center"><p className="text-white/30 text-xs font-hud">{t('labels.select_char')}</p></div>}
-      </div>
-    )
-  }
 
   return (
     <div className={`h-full flex flex-col ${transitionClass} cursor-crosshair ${containerBgClass}`}>

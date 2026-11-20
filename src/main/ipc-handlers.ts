@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app, dialog, screen } from 'electron';
+import { ipcMain, BrowserWindow, app, dialog } from 'electron';
 import { execFile } from 'child_process';
 import { join } from 'path';
 import { readFile, writeFile } from 'fs/promises';
@@ -317,13 +317,8 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   ipcMain.handle('fetch-player-stats', (_, tekkenId: string) => fetchPlayerStatsFromWeb(tekkenId));
   ipcMain.handle('fetch-player-stats-api-key', (_, { apiKey, tekkenId }) => fetchPlayerStatsWithApiKey(apiKey, tekkenId));
   // -------------------------------------------------
-  // Ventana: cerrar, minimizar, opacidad, colapsar, horizontal
+  // Ventana: cerrar, minimizar, opacidad
   // -------------------------------------------------
-  let isHorizontal = false;
-  let isCollapsed = false;
-  let collapsedBounds: Electron.Rectangle | null = null;
-  let verticalBounds: Electron.Rectangle | null = null;
-
   ipcMain.on('close-window', () => {
     if (!win.isDestroyed()) win.close();
   });
@@ -340,47 +335,6 @@ export function registerIpcHandlers(win: BrowserWindow): void {
     if (win.isDestroyed()) return;
     const value = Number(opacity);
     if (Number.isFinite(value)) win.setOpacity(Math.min(1, Math.max(0.2, value)));
-  });
-
-  ipcMain.on('toggle-collapse', () => {
-    if (win.isDestroyed()) return;
-    const bounds = win.getBounds();
-    isCollapsed = !isCollapsed;
-    if (isCollapsed) {
-      collapsedBounds = bounds;
-      win.setSize(bounds.width, Math.min(bounds.height, 64));
-    } else if (collapsedBounds) {
-      win.setBounds(collapsedBounds);
-      collapsedBounds = null;
-    }
-  });
-
-  ipcMain.on('toggle-horizontal', () => {
-    if (win.isDestroyed()) return;
-    const display = screen.getDisplayMatching(win.getBounds());
-    isHorizontal = !isHorizontal;
-    if (isHorizontal) {
-      verticalBounds = win.getBounds();
-      win.setResizable(false);
-      win.setBounds({
-        x: display.workArea.x,
-        y: display.workArea.y,
-        width: display.workArea.width,
-        height: 300,
-      });
-    } else {
-      win.setResizable(true);
-      win.setBounds(
-        verticalBounds ?? {
-          x: display.workArea.x + 80,
-          y: display.workArea.y + 80,
-          width: 600,
-          height: 600,
-        }
-      );
-      verticalBounds = null;
-    }
-    win.webContents.send('horizontal-changed', isHorizontal);
   });
 
   // -------------------------------------------------

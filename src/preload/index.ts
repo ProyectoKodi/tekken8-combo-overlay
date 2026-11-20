@@ -11,9 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSyncProgress: (cb: (p: any) => void) => { const h = (_: any, p: any) => cb(p); ipcRenderer.on('sync-progress', h); return () => ipcRenderer.removeListener('sync-progress', h) },
   
   // Ventana
-  toggleClickThrough: () => ipcRenderer.send('toggle-click-through'), // NUEVO
-  toggleCollapse: () => ipcRenderer.send('toggle-collapse'),
-  toggleHorizontal: () => ipcRenderer.send('toggle-horizontal'),
+  toggleClickThrough: () => ipcRenderer.send('toggle-click-through'),
   setOpacity: (opacity: number) => ipcRenderer.send('set-opacity', opacity),
   closeWindow: () => ipcRenderer.send('close-window'),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
@@ -42,8 +40,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchPlayerStatsWithApiKey: (apiKey: string, tekkenId?: string) => ipcRenderer.invoke('fetch-player-stats-api-key', { apiKey, tekkenId }),
   
   // Hotkeys
-  onHotkeyToggle: (cb: () => void) => { ipcRenderer.on('hotkey-toggle', cb); return () => ipcRenderer.removeListener('hotkey-toggle', cb) },
-  onHorizontalChanged: (cb: (val: boolean) => void) => { const h = (_: any, v: boolean) => cb(v); ipcRenderer.on('horizontal-changed', h); return () => ipcRenderer.removeListener('horizontal-changed', h) },
   onPracticeCombo: (cb: (combo: Combo) => void) => { const h = (_: any, c: Combo) => cb(c); ipcRenderer.on('practice-combo', h); return () => ipcRenderer.removeListener('practice-combo', h) },
   onHotkeyClickThrough: (cb: (isIgnoring: boolean) => void) => { const h = (_: any, v: boolean) => cb(v); ipcRenderer.on('hotkey-click-through-toggle', h); return () => ipcRenderer.removeListener('hotkey-click-through-toggle', h) },
   onHotkeyAddCombo: (cb: () => void) => { ipcRenderer.on('hotkey-add-combo', cb); return () => ipcRenderer.removeListener('hotkey-add-combo', cb) },
