@@ -7,7 +7,6 @@ export function registerHotkeys(win: BrowserWindow): void {
     else { win.show(); win.focus() }
   })
 
-  // F10 se retiró junto con el modo colapsado.
 
   // NUEVO: F1 - Añadir combo rápido
   globalShortcut.register('F1', () => {

@@ -3,9 +3,7 @@ import { useOverlayStore, type ThemeColor } from '../store/overlayStore'
 import type { Language } from '../locales'
 import HelpModal from './HelpModal' // <--- IMPORTAMOS EL MODAL
 
-interface Props { compact?: boolean }
-
-export default function WindowControls({ compact }: Props) {
+export default function WindowControls() {
   const { 
     opacity, setOpacity, selectedCharacter, clearCharacter, 
     themeColor, setThemeColor, language, setLanguage, t,
@@ -20,15 +18,6 @@ export default function WindowControls({ compact }: Props) {
   const handleAutoLaunch = async () => { const next = !autoLaunch; await window.electronAPI.setAutoLaunch(next); setAutoLaunchState(next) }
   const handleThemeChange = (e: React.ChangeEvent<HTMLSelectElement>) => setThemeColor(e.target.value as ThemeColor)
   const handleLangChange = (e: React.ChangeEvent<HTMLSelectElement>) => setLanguage(e.target.value as Language)
-
-  if (compact) {
-    return (
-      <div className="flex items-center gap-1 no-drag flex-shrink-0">
-        <button onClick={() => window.electronAPI.minimizeWindow()} className="w-4 h-4 flex items-center justify-center rounded hover:bg-white/10 text-white/40 hover:text-white transition-colors text-[10px]">–</button>
-        <button onClick={() => window.electronAPI.closeWindow()} className="w-4 h-4 flex items-center justify-center rounded hover:bg-red-500/70 text-white/40 hover:text-white transition-colors text-[10px]">✕</button>
-      </div>
-    )
-  }
 
   return (
     <>

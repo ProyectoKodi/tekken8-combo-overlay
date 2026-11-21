@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useOverlayStore } from '../store/overlayStore'
 import { CHARACTER_NAMES } from '../types/combo'
 
-export default function SearchBar({ compact }: { compact?: boolean }) {
+export default function SearchBar() {
   const { selectedCharacter, setCharacter, setFilter, filters } = useOverlayStore()
   const [value, setValue] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])

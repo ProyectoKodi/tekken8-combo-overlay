@@ -22,7 +22,7 @@ El build (`electron-vite`) no ejecuta `tsc`, por eso estos errores convivían co
 
 | Área | Problema | Corrección |
 |---|---|---|
-| `src/main/ipc-handlers.ts` | Faltaban `close-window`, `minimize-window`, `set-opacity`, `toggle-collapse`, `toggle-horizontal`, `open-practice`, `set-auto-launch`, `set-ignore-mouse` | Restaurados con lógica real: resize al colapsar, barra horizontal a lo ancho del monitor, opacidad acotada 0.2–1, `openPracticeWindow` conectado |
+| `src/main/ipc-handlers.ts` | Faltaban handlers de ventana y modo práctica | Se restauraron originalmente los handlers de ventana; por decisión posterior de diseño, se eliminaron los canales y la lógica de colapso/modo horizontal. Se conservan cerrar, minimizar, opacidad y modo práctica |
 | `src/main/ipc-handlers.ts` | `clear-cache` devolvía `true` sin borrar nada | Llama a `clearCache(character)`; «Recargar» ya refresca de verdad |
 | `src/main/ipc-handlers.ts` | `sync-all-characters` era un stub `{total: 0}` | Recorre los personajes, cachea, emite `sync-progress` y cuenta nuevos con `comboHash` |
 | `src/main/ipc-handlers.ts` | Canal `fetch-player-stats-with-api-key` no coincidía con el preload | Unificado a `fetch-player-stats-api-key` |

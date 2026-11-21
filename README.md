@@ -9,7 +9,7 @@ Overlay de escritorio para **Tekken 8** (Windows) que muestra combos sobre el ju
 ## ✨ Características
 
 - **📚 Base de combos:** extrae los combos de [tekken8combo.kagewebsite.com](https://tekken8combo.kagewebsite.com/) con caché de 24 h.
-- **🖼️ Ficha de jugador:** banner con fondo de escenario (elegible o automático), retrato de tu main, emblema del rango, región y prowess. Tiene variante compacta para el modo horizontal.
+- **🖼️ Ficha de jugador:** banner con fondo de escenario (elegible o automático), retrato de tu main, emblema del rango, región y prowess.
 - **🎨 Notación visual:** convierte texto (`d/f,2 ► b,1,4`) en los iconos oficiales, incluidos holds, just-frames, slides, delays y Heat Dash.
 - **🖥️ Overlay flotante:** ventana transparente, sin marco y *always-on-top*, pensada para "pantalla completa sin bordes".
 - **🖱️ Click-through:** el botón de candado (o **F8**) deja pasar los clics al juego.
@@ -18,7 +18,7 @@ Overlay de escritorio para **Tekken 8** (Windows) que muestra combos sobre el ju
 - **⏱️ Recientes:** los últimos 10 combos practicados.
 - **✏️ Notas personales:** una nota de texto por combo.
 - **👁️ Modo Streamer** (fondo transparente) y **🏆 Modo Torneo** (oculta botones de edición).
-- **📏 Modo Compacto** y **modo horizontal** (barra fina sobre el juego).
+- **📏 Modo Compacto** (reduce la interfaz para priorizar la lista de combos).
 - **🌍 Multiidioma:** español, inglés y portugués.
 - **🎨 Temas:** dorado, azul, rojo, verde y rosa.
 - **🔄 Actualización automática** vía electron-updater (releases de GitHub).
@@ -38,12 +38,11 @@ Overlay de escritorio para **Tekken 8** (Windows) que muestra combos sobre el ju
 | Tecla | Acción |
 | :--- | :--- |
 | **F9** | Mostrar / ocultar el overlay |
-| **F10** | Colapsar / expandir la ventana |
 | **F8** | Bloquear / desbloquear el ratón (click-through) |
 | **F1** | Abrir el formulario de "Añadir combo" |
 | **F3** | Alternar Modo Streamer |
 
-En la interfaz: 🔒 candado, 👁️ streamer, 🏆 torneo, 📏 compacto, ⟺ horizontal, ⭐ favorito, ○/✔ aprendido, 📋 copiar notación, 💬 copiar para Discord, ✏️ nota.
+En la interfaz: 🔒 candado, 👁️ streamer, 🏆 torneo, 📏 compacto, ⭐ favorito, ○/✔ aprendido, 📋 copiar notación, 💬 copiar para Discord, ✏️ nota.
 
 ## 🛠️ Desarrollo
 

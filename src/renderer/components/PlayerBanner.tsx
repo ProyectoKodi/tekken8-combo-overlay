@@ -4,7 +4,6 @@ import { bannerBackground, bannerPortrait, bannerRankArt } from '../utils/banner
 
 interface Props {
   profile: RankData
-  compact?: boolean
   onEdit?: () => void
 }
 
@@ -21,61 +20,11 @@ function initials(name: string): string {
 /** Desvanece el borde inferior del retrato para que no corte en seco. */
 const PORTRAIT_MASK = 'linear-gradient(to top, transparent 0%, #000 14%, #000 100%)'
 
-export default function PlayerBanner({ profile, compact, onEdit }: Props) {
+export default function PlayerBanner({ profile, onEdit }: Props) {
   const seed = profile.mainChar || profile.playerName || 'tekken'
   const background = useMemo(() => bannerBackground(profile.background, seed), [profile.background, seed])
   const portrait = useMemo(() => bannerPortrait(profile.mainChar), [profile.mainChar])
   const rankArt = useMemo(() => bannerRankArt(profile.rank), [profile.rank])
-
-  if (compact) {
-    return (
-      <div className="relative flex h-[44px] w-full min-w-0 items-center gap-2 overflow-hidden rounded-lg border border-white/10 no-drag">
-        {background && (
-          <img src={background} alt="" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-black/75" />
-
-        {portrait ? (
-          <img
-            src={portrait}
-            alt={profile.mainChar}
-            draggable={false}
-            className="relative ml-1 h-[40px] w-[34px] shrink-0 object-contain object-bottom"
-          />
-        ) : (
-          <div className="relative ml-1 flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded bg-white/10 text-[10px] font-black text-white/50">
-            {initials(profile.mainChar || '?')}
-          </div>
-        )}
-
-        <div className="relative min-w-0 flex-1">
-          <p className="truncate text-[11px] font-bold leading-tight text-white">{profile.playerName || 'Jugador'}</p>
-          <p className="truncate text-[9px] leading-tight text-white/45">
-            {profile.region || 'Sin región'}
-            {profile.prowess ? ` · ⚡ ${profile.prowess}` : ''}
-          </p>
-        </div>
-
-        {onEdit && (
-          <button
-            onClick={onEdit}
-            className="relative shrink-0 rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[9px] text-white/50 hover:text-white"
-            title="Editar perfil"
-          >
-            ⚙️
-          </button>
-        )}
-
-        <div className="relative mr-1 flex h-[36px] w-[80px] shrink-0 items-center justify-end">
-          {rankArt ? (
-            <img src={rankArt} alt={profile.rank} draggable={false} className="max-h-full w-auto drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" />
-          ) : (
-            <span className="truncate text-[9px] font-black uppercase text-amber-300">{profile.rank}</span>
-          )}
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl border border-white/10 no-drag shadow-2xl" style={{ height: 188 }}>

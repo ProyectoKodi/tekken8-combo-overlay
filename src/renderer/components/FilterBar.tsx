@@ -13,7 +13,7 @@ const TAG_COLORS: Record<string, string> = {
   'No Wall': 'bg-zinc-800/50 border-zinc-600/50 text-zinc-300 data-[active]:bg-zinc-600/60 data-[active]:text-white',
 }
 
-export default function FilterBar({ compact }: { compact?: boolean }) {
+export default function FilterBar() {
   const { filters, toggleTag, setFilter, clearFilters, filteredCombos, combos, fromCache, loading, favoriteIds, learnedIds, t } = useOverlayStore()
   const [lastPulsedTag, setLastPulsedTag] = useState<string | null>(null)
   const displayed = filteredCombos().filter((item) => !isSeparator(item))
@@ -28,7 +28,7 @@ export default function FilterBar({ compact }: { compact?: boolean }) {
   const toggle100Dmg = () => setFilter({ minDamage: filters.minDamage === 100 ? 0 : 100 })
 
   return (
-    <div className={`${compact ? 'px-4 py-1' : 'px-4 py-2'} border-b border-white/5 space-y-1.5`}>
+    <div className="px-4 py-2 border-b border-white/5 space-y-1.5">
       <div className="flex items-center gap-1.5 overflow-x-auto no-drag" style={{ scrollbarWidth: 'none' }}>
         <button onClick={() => setFilter({ showOnlyFavorites: !showOnlyFavorites })} disabled={!hasFavorites}
           className={`flex-shrink-0 text-[10px] font-hud font-semibold px-2 py-0.5 rounded border transition-all ${showOnlyFavorites ? 'bg-amber-600/60 border-amber-500/60 text-white' : 'bg-amber-900/30 border-amber-700/40 text-amber-400/80 hover:text-amber-300 hover:border-amber-600/60'} ${!hasFavorites ? 'opacity-35 cursor-not-allowed' : 'cursor-pointer'}`}>

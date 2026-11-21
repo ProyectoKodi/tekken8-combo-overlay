@@ -11,11 +11,7 @@ const RANGOS = TEKKEN_RANKS
 
 const PERSONAJES = CHARACTER_NAMES
 
-interface RankTrackerProps {
-  compact?: boolean
-}
-
-const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
+const RankTracker: React.FC = () => {
   const { tekkenId, setTekkenId, rankData, setRankData, t } = useOverlayStore()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState(rankData || {
@@ -190,11 +186,6 @@ const RankTracker: React.FC<RankTrackerProps> = ({ compact }) => {
         </button>
       </div>
     )
-  }
-
-  if (compact) {
-    const compactProfile: RankData = { ...DEFAULT_PROFILE, ...(rankData as Partial<RankData>) }
-    return <PlayerBanner profile={compactProfile} compact onEdit={() => setIsEditing(true)} />
   }
 
   // DISEÑO PRINCIPAL: ficha de jugador con el banner
