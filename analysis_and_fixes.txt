@@ -640,3 +640,12 @@ Verificado: typecheck OK, 35/35 tests, build OK, dist OK.
 - Nueva sección "📸 Capturas" que enlaza 4 imágenes en docs/img/
   (personajes, combos, práctica, progreso) con docs/img/LEEME.txt
   explicando qué captura va en cada nombre.
+
+## 43. Release 3.4.0 publicado (2026-11-22)
+
+- Commit "release: v3.4.0" + tag v3.4.0 empujados a GitHub.
+- README con las 4 capturas (docs/img/) visible en main tras
+  fast-forward de feat/banner-jugador -> main.
+- Release publicado con exe (83 MB) + blockmap + latest.yml.
+- Pendiente del usuario: subir assets de Discord (retratos/rangos) al
+  portal de la app oficial y probar el auto-update desde 3.3.1.
