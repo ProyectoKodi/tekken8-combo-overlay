@@ -1,30 +1,18 @@
 {
   "app": {
     "title": "T8 Combos",
-    "search_char": "Search character...",
-    "search_combo": "Search {{char}} combos...",
     "back": "← Back",
-    "combos": "combos",
-    "settings": "Settings"
+    "combos": "combos"
   },
   "actions": {
-    "sync": "↻ Sync all",
-    "export": "⬇ Exp",
-    "import": "⬆ Imp",
     "recent": "🕒 Recent",
     "focus": "🎯 Focus",
-    "add": "+ Add",
     "reload": "↻ Reload",
-    "close": "Close",
     "save": "Save",
-    "cancel": "Cancel",
     "copy": "📋 Copy",
-    "copied": "Copied!",
     "practice": "▶ Practice",
-    "delete": "Delete",
-    "restart": "↺ Restart",
-    "prev": "◀ Prev",
-    "next": "Next ▶"
+    "clear_filters": "Clear filters",
+    "go_chars": "Go to characters"
   },
   "filters": {
     "favorites": "★ Favs",
@@ -48,7 +36,8 @@
       "Crouch": "Crouch",
       "Standing": "Standing",
       "No Wall": "No Wall"
-    }
+    },
+    "auto_bg": "Choose automatically"
   },
   "labels": {
     "damage": "DMG",
@@ -61,16 +50,20 @@
     "load_error": "Failed to load combos",
     "retry": "Retry",
     "loading": "Loading...",
-    "practice_mode": "Practice mode",
     "select_char": "Select a character",
-    "no_notation": "No notation"
+    "no_notation": "No notation",
+    "routine": "My routine",
+    "routine_hint": "Your favorites from every character in one list",
+    "no_results_filtered": "No results with these filters",
+    "routine_empty": "No favorites yet. Mark combos with ★ to build your routine.",
+    "cache_fresh": "Fresh cache (under 24 h)",
+    "cache_stale": "Stale cache — sync this character"
   },
   "help": {
     "title": "Quick User Guide",
     "hotkeys_title": "⌨️ Keyboard Shortcuts (Hotkeys)",
     "hotkey_f8": "Lock / Unlock mouse (Click-Through).",
     "hotkey_f9": "Show / Hide the Overlay.",
-    "hotkey_f1": "Open the form to add a combo.",
     "hotkey_f3": "Toggle Streamer Mode (transparent background).",
     "ui_title": "🖱️ Interface Controls",
     "ui_lock": "Lock icon: Blocks the mouse so clicks go to the game.",
@@ -78,16 +71,126 @@
     "ui_trophy": "Trophy icon: Tournament Mode (hides editing buttons).",
     "ui_ruler": "Ruler icon: Compact Mode (hides menus leaving only the list).",
     "ui_note": "Pencil icon: Add a personal note to a combo.",
-    "ui_close": "Got it, close guide"
+    "ui_close": "Got it, close guide",
+    "hotkey_f6": "Previous combo in the practice bar (drill mode).",
+    "hotkey_f7": "Next combo in the practice bar (drill mode).",
+    "backups": "Backups",
+    "no_backups": "No backups yet (they are created automatically every 7 days)",
+    "restore": "Restore"
   },
-  "rank": {
-    "title": "Edit Profile",
-    "official_ranking": "Official Ranking",
-    "save": "Save",
-    "points": "Points...",
-    "tekken_id": "Tekken ID...",
-    "editor": "Editor",
-    "export_custom": "⬇ Custom",
-    "import_custom": "⬆ Custom"
+  "toasts": {
+    "copied": "Notation copied",
+    "copied_discord": "Copied for Discord",
+    "note_saved": "Note saved",
+    "exported": "Profile exported",
+    "imported": "Profile imported",
+    "import_error": "Failed to import profile",
+    "sync_done": "Synced {{total}} characters · {{nuevos}} new",
+    "sync_failed": "{{count}} failed: {{names}}",
+    "sync_running": "Sync in progress; wait for it to finish before closing",
+    "lock_hint": "Overlay locked: clicks go to the game. Hover the top bar to unlock.",
+    "hotkey_updated": "Hotkey updated",
+    "hotkey_failed": "Could not register {{accel}}; try another combination",
+    "hotkey_duplicate": "{{accel}} is already assigned to another hotkey",
+    "new_combos": "+{{n}} new {{char}} combos",
+    "pending_news": "{{count}} new combos to review: {{names}}",
+    "discord_saved": "Discord preference saved",
+    "new_chars": "{count} new characters on the site: {names}",
+    "new_chars_one": "New character on the site: {names}",
+    "backup_restored": "Profile restored from backup",
+    "backup_failed": "Could not restore the backup"
+  },
+  "hotkeys": {
+    "hint": "Click a hotkey and press the new combination (Ctrl/Alt/Shift + key).",
+    "capturing": "Waiting for the new combination…"
+  },
+  "settings": {
+    "ui_scale": "UI scale",
+    "title": "Settings",
+    "always_actions": "Action buttons always visible",
+    "always_actions_hint": "Off: they appear when hovering the card",
+    "restore_last_view": "Open on last view",
+    "restore_last_view_hint": "On startup, return to the last character or routine",
+    "oled": "Pure black background (OLED)",
+    "oled_hint": "Less glare for late-night play",
+    "compact_list": "Compact list (one line per combo)",
+    "compact_list_hint": "≡/▤ button in the character bar",
+    "sound_feedback": "Sound when marking learned",
+    "sound_feedback_hint": "A subtle ding when completing a combo with ✔"
+  },
+  "tips": {
+    "favorite": "Mark as favorite",
+    "learned": "Mark as learned",
+    "note": "Add note",
+    "discord": "Copy for Discord",
+    "video": "Watch combo video",
+    "open_youtube": "Open in browser",
+    "help": "Help / Usage guide",
+    "streamer_mode": "Streamer mode",
+    "tournament_mode": "Tournament mode",
+    "lock": "Lock the mouse (click-through)",
+    "compact_mode": "Compact mode",
+    "language": "Language",
+    "theme": "Theme color",
+    "autostart": "Start with Windows",
+    "opacity": "Opacity",
+    "minimize": "Minimize",
+    "close_window": "Close",
+    "sync_all": "Sync all characters",
+    "export_profile": "Export profile",
+    "import_profile": "Import profile",
+    "edit_profile": "Edit profile",
+    "copy_id": "Copy Tekken ID",
+    "pick_image": "Pick an image from your computer",
+    "position": "Change position (top/bottom)",
+    "close_escape": "Close (Escape)",
+    "prev_combo": "Previous combo (F6)",
+    "next_combo": "Next combo (F7)",
+    "mini": "Mini-card mode (corner)",
+    "mini_exit": "Back to full strip",
+    "tekken_detected": "Tekken 8 detected: the overlay will show automatically",
+    "tekken_hidden": "Tekken 8 is not running",
+    "practice_stats": "Today's practice and day streak"
+  },
+  "update": {
+    "available": "New version available: v{version}",
+    "ready": "Update ready! Restart to apply.",
+    "downloading": "Downloading…",
+    "install": "Restart & Install",
+    "now": "Update now"
+  },
+  "share": {
+    "button": "Share progress",
+    "hint": "Generates a PNG image with your progress",
+    "generating": "Generating…",
+    "title": "My Tekken 8 progress",
+    "of": "of",
+    "learned": "combos learned",
+    "saved_copy": "Card copied to clipboard and downloaded",
+    "saved_download": "Card downloaded (progreso-tekken)",
+    "failed": "Could not generate the card"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Let's go!",
+    "s1_title": "Pick your character",
+    "s1_desc": "Tap a character to browse all their combos with visual notation.",
+    "s2_title": "Sync the guide",
+    "s2_desc": "The sync button downloads the latest combos from the site and tells you about new ones.",
+    "s3_title": "Practice & memorize",
+    "s3_desc": "Hit ▶ on any combo: a practice strip opens over your game, navigate with F6/F7 and mark learned ones with ✔."
+  },
+  "themes": {
+    "dorado": "Classic gold",
+    "azul": "Electric blue",
+    "rojo": "Tekken red",
+    "verde": "Jade green"
+  },
+  "search": {
+    "title": "Search all characters",
+    "placeholder": "Notation, author, tag or note…",
+    "hint": "Type to search the cache of all synced characters (Ctrl+F)",
+    "empty": "No results — only synced characters are searched"
   }
 }

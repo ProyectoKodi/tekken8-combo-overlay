@@ -6,9 +6,10 @@ directories:
 files:
   - out/**/*
   - package.json
-extraResources:
-  - from: resources/yt-dlp.exe
-    to: yt-dlp.exe
+publish:
+  provider: github
+  owner: ProyectoKodi
+  repo: tekken8-combo-overlay
 win:
   target:
     - target: nsis

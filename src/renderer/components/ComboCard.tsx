@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import type { Combo } from '../types/combo'
 import { parseNotation, type NotationToken, type BadgeColor } from '../utils/notationParser'
 import { useOverlayStore } from '../store/overlayStore'
+import { pushToast } from '../store/toastStore'
+import { playDing } from '../utils/sound'
 
 interface Props { combo: Combo; index?: number; style?: React.CSSProperties }
 
@@ -14,39 +16,78 @@ const TAG_STYLES: Record<string, string> = {
   CH: 'bg-amber-900/60 text-amber-300 border-amber-700/50', Crouch: 'bg-green-900/60 text-green-300 border-green-700/50', Standing: 'bg-cyan-900/60 text-cyan-300 border-cyan-700/50',
   'No Wall': 'bg-zinc-800/60 text-zinc-400 border-zinc-600/50', 'Floor Break': 'bg-orange-900/60 text-orange-300 border-orange-700/50',
 }
+/** Etiquetas de situación que colorean la tarjeta; en un Set para lookup O(1). */
+const DANGEROUS_TAGS = new Set(['Heat', 'Rage', 'CH'])
 
-function TagBadge({ tag }: { tag: string }) {
-  const { t } = useOverlayStore()
+const TagBadge = memo(function TagBadge({ tag }: { tag: string }) {
+  const t = useOverlayStore((s) => s.t)
   if (/^stage:/i.test(tag)) return <span className="text-[9px] font-hud px-1.5 py-0.5 rounded border bg-slate-800/70 text-slate-300/80 border-slate-600/40 flex-shrink-0">📍 {tag.replace(/^stage:\s*/i, '')}</span>
   const style = TAG_STYLES[tag] ?? 'bg-white/10 text-white/60 border-white/15'
   return <span className={`text-[9px] font-hud font-semibold px-1.5 py-0.5 rounded border flex-shrink-0 ${style}`}>{t(`filters.tags.${tag}`) || tag}</span>
-}
+})
 
-function RenderToken({ token }: { token: NotationToken }) {
-  if (token.type === 'separator') return <img src="https://tekken8combo.kagewebsite.com/tpl/img/input/follow.svg" alt="►" className="h-4 w-auto mx-1 opacity-40" draggable={false} />
-  if (token.type === 'image') return <img src={token.src} alt={token.alt} title={token.alt} draggable={false} className="h-5 w-auto select-none" style={{ imageRendering: 'crisp-edges' }} onError={(e) => { const parent = e.currentTarget.parentElement; if (parent) { const span = document.createElement('span'); span.textContent = token.alt; span.className = 'text-[10px] text-white/70 font-mono'; parent.replaceChild(span, e.currentTarget) } }} />
-  if (token.type === 'badge') return <span className={`text-[9px] font-hud px-1.5 py-0.5 rounded ${BADGE_STYLES[token.color]}`}>{token.value}</span>
-  return <span className="text-[10px] font-hud text-white/55">{token.value}</span>
-}
+const RenderToken = memo(function RenderToken({ token }: { token: NotationToken }) {
+  if (token.type === 'separator') return <img src="https://tekken8combo.kagewebsite.com/tpl/img/input/follow.svg" alt="►" className="h-5 w-auto mx-1 opacity-40" draggable={false} />
+  if (token.type === 'image') return <img src={token.src} alt={token.alt} title={token.alt} draggable={false} className="h-6 w-auto select-none" style={{ imageRendering: 'crisp-edges' }} onError={(e) => { const parent = e.currentTarget.parentElement; if (parent) { const span = document.createElement('span'); span.textContent = token.alt; span.className = 'text-[10px] text-white/70 font-mono'; parent.replaceChild(span, e.currentTarget) } }} />
+  if (token.type === 'badge') return <span className={`text-[10px] font-hud px-2 py-0.5 rounded ${BADGE_STYLES[token.color]}`}>{token.value}</span>
+  return <span className="text-[11px] font-hud text-white/55">{token.value}</span>
+})
 
-function NotationDisplay({ notation }: { notation: string }) {
-  const { t } = useOverlayStore()
-  const tokens = parseNotation(notation)
+/**
+ * La notación visual solo se re-parsea si cambia el texto: con el memo y el
+ * useMemo, desplazarse o cambiar filtros no re-analiza las decenas de
+ * notaciones visibles en cada render.
+ */
+const NotationDisplay = memo(function NotationDisplay({ notation }: { notation: string }) {
+  const t = useOverlayStore((s) => s.t)
+  const tokens = useMemo(() => parseNotation(notation), [notation])
   if (!tokens.length) return <p className="font-mono text-xs text-white/60 italic">{t('labels.no_notation')}</p>
   return <div className="flex flex-wrap items-center gap-x-0.5 gap-y-1">{tokens.map((token, i) => <RenderToken key={i} token={token} />)}</div>
+})
+
+/** Botón circular de opción, siempre visible (estilo ficha de la web). */
+function RoundButton({ onClick, title, active = false, danger = false, children }: {
+  onClick: (e: React.MouseEvent) => void
+  title: string
+  active?: boolean
+  danger?: boolean
+  children: React.ReactNode
+}) {
+  const base = 'w-7 h-7 rounded-full flex items-center justify-center text-[12px] leading-none no-drag transition-all border cursor-pointer flex-shrink-0'
+  const look = danger
+    ? 'bg-red-950/50 border-red-500/30 text-red-300/80 hover:bg-red-500/20 hover:text-red-200 hover:border-red-400/50'
+    : active
+      ? 'bg-overlay-accent/25 border-overlay-accent/60 text-overlay-accent'
+      : 'bg-white/[0.06] border-white/10 text-white/45 hover:bg-white/[0.12] hover:text-white/90 hover:border-white/25'
+  return (
+    <button onClick={onClick} title={title} className={`${base} ${look}`}>
+      {children}
+    </button>
+  )
 }
 
-export default function ComboCard({ combo, index = 0, style }: Props) {
-  const [copied, setCopied] = useState(false)
+/**
+ * memo + suscripción por selectores: una tarjeta solo se re-renderiza si
+ * cambia SU combo, su estado de favorito/aprendido o el modo torneo. Con el
+ * store entero suscrito, cualquier cambio de la app repintaba todas.
+ */
+const ComboCard = memo(function ComboCard({ combo, index = 0, style }: Props) {
   const [justStarred, setJustStarred] = useState(false)
   const [isEditingNote, setIsEditingNote] = useState(false)
   const [noteText, setNoteText] = useState(combo.customNote || '')
-  const [copiedUrl, setCopiedUrl] = useState(false)
-  
-  const { isFavorite, toggleFavorite, addRecentCombo, t, isTournamentMode, isLearned, toggleLearned } = useOverlayStore()
-  const isFav = isFavorite(combo.id)
-  const isLearn = isLearned(combo.id)
-  const isDangerous = combo.tags.some(t => ['Heat', 'Rage', 'CH'].includes(t))
+
+  // Selectores finos: cada campo por separado, no el store entero
+  const t = useOverlayStore((s) => s.t)
+  const addRecentCombo = useOverlayStore((s) => s.addRecentCombo)
+  const toggleFavorite = useOverlayStore((s) => s.toggleFavorite)
+  const toggleLearned = useOverlayStore((s) => s.toggleLearned)
+  const isTournamentMode = useOverlayStore((s) => s.isTournamentMode)
+  const alwaysShowActions = useOverlayStore((s) => s.alwaysShowActions)
+  const compactList = useOverlayStore((s) => s.compactList)
+  const soundFeedback = useOverlayStore((s) => s.soundFeedback)
+  const isFav = useOverlayStore((s) => s.favoriteIds.has(combo.id))
+  const isLearn = useOverlayStore((s) => s.learnedIds.has(combo.id))
+  const isDangerous = combo.tags.some((t) => DANGEROUS_TAGS.has(t))
 
   const openPractice = () => { addRecentCombo(combo); window.electronAPI.openPractice(combo) }
 
@@ -56,26 +97,14 @@ export default function ComboCard({ combo, index = 0, style }: Props) {
     const hits = combo.hits > 0 ? ` | ${combo.hits} HITS` : ''
     const tags = combo.tags.length > 0 ? ` | [${combo.tags.join(', ')}]` : ''
     const creator = combo.creator ? ` | ${t('labels.by')}: ${combo.creator}` : ''
-    navigator.clipboard.writeText(`[${combo.character}${dmg}${hits}${tags}${creator}]\n${combo.notation}`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500) })
+    navigator.clipboard.writeText(`[${combo.character}${dmg}${hits}${tags}${creator}]\n${combo.notation}`).then(() => pushToast(t('toasts.copied'), 'ok'))
   }
 
-  // NUEVO: Copiar enlace para Discord
+  // Copiar texto formateado para pegar en Discord
   const copyDiscordLink = (e: React.MouseEvent) => {
     e.stopPropagation()
-    // Generamos un enlace ficticio con los datos del combo.
-    // En una app real, esto se subiría a un servidor para acortar el link.
-    // Aquí usamos el esquema de URL "tekken8://"
-    const encodedData = encodeURIComponent(JSON.stringify({
-      id: combo.id, char: combo.character, notation: combo.notation, damage: combo.damage, creator: combo.creator
-    }))
-    const url = `https://discord.com/channels/@me/123456789012345678 (Combo: ${combo.character} - ${combo.notation})` 
-    // Como los links personalizados no se pueden abrir en Discord fácilmente, 
-    // copiamos un texto formateado bonito y un comando para abrir.
-    
-    // Lo que realmente funciona en Discord es pegar un texto.
     const text = `**${combo.character}** | ${combo.damage} DMG | ${combo.notation}\n> ${combo.creator ? `Autor: ${combo.creator} | ` : ''}Copia esto en Tekken 8 Overlay: ${combo.notation}`
-    
-    navigator.clipboard.writeText(text).then(() => { setCopiedUrl(true); setTimeout(() => setCopiedUrl(false), 1500) })
+    navigator.clipboard.writeText(text).then(() => pushToast(t('toasts.copied_discord'), 'ok'))
   }
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
@@ -85,74 +114,131 @@ export default function ComboCard({ combo, index = 0, style }: Props) {
     if (!wasFav) { setJustStarred(true); setTimeout(() => setJustStarred(false), 300) }
   }
 
-  const handleDeleteCustom = async (e: React.MouseEvent) => {
+  const handleToggleLearned = (e: React.MouseEvent) => {
     e.stopPropagation()
-    await window.electronAPI.deleteCustomCombo(combo.id)
-    await useOverlayStore.getState().refreshCombos()
+    if (!isLearn && soundFeedback) playDing()
+    toggleLearned(combo.id)
   }
 
   const saveNote = (e: React.MouseEvent) => {
     e.stopPropagation()
     window.electronAPI.saveCustomNote(combo.id, noteText)
     setIsEditingNote(false)
-    combo.customNote = noteText 
+    combo.customNote = noteText
+    pushToast(t('toasts.note_saved'), 'ok')
+  }
+
+  // Modo compacto: una línea por combo (notación + daño + ★) para consultar
+  // rápido. El clic sigue abriendo la práctica.
+  if (compactList) {
+    return (
+      <div style={{ ...style, animationDelay: `${Math.min(index, 15) * 20}ms` }} onClick={openPractice} title={t('actions.practice')}
+        className={`mx-4 mb-1 rounded-lg overflow-hidden border border-white/8 hover:border-overlay-accent/40 hover:bg-white/[0.06] transition-all group cursor-pointer animate-combo-enter flex items-center gap-2 px-3 py-1.5 ${isLearn ? 'bg-emerald-900/10' : 'bg-white/[0.03]'}`}>
+        <RoundButton onClick={handleToggleFavorite} title={t('tips.favorite')} active={isFav}>
+          <span className={justStarred ? 'animate-star-pop' : ''}>{isFav ? '★' : '☆'}</span>
+        </RoundButton>
+        <span className="font-mono text-[11px] text-white/80 truncate flex-1 min-w-0">{combo.notation}</span>
+        {combo.isNew && <span className="text-[8px] font-bold text-emerald-400 bg-emerald-400/10 px-1 py-0.5 rounded flex-shrink-0">{t('labels.new')}</span>}
+        {combo.difficulty && (
+          <span title={t(`filters.${combo.difficulty}`)}
+            className={`w-2 h-2 rounded-full flex-shrink-0 border ${combo.difficulty === 'facil' ? 'bg-green-500/80 border-green-300/40' : combo.difficulty === 'media' ? 'bg-yellow-500/80 border-yellow-300/40' : 'bg-red-500/80 border-red-300/40'}`} />
+        )}
+        {combo.damage > 0 && <span className="text-[10px] font-hud font-bold text-overlay-accent flex-shrink-0">{combo.damage}<span className="text-overlay-accent/50 font-normal"> DMG</span></span>}
+        {isLearn && <span className="text-[9px] text-emerald-500 flex-shrink-0" title={t('filters.learned') || 'APRENDIDO'}>✔</span>}
+      </div>
+    )
   }
 
   return (
-    <div style={{ ...style, animationDelay: `${Math.min(index, 15) * 20}ms` }} className={`mx-4 mb-2 border rounded-lg overflow-hidden hover:bg-white/6 transition-all group cursor-pointer animate-combo-enter ${isLearn ? 'bg-emerald-900/10' : 'bg-white/4'} ${isDangerous ? 'border-red-500/30 hover:border-red-500/60 shadow-[0_0_10px_rgba(220,38,38,0.1)]' : 'border-white/6 hover:border-overlay-accent/40'}`} onClick={openPractice} title={t('actions.practice')}>
-      
-      <div className="px-4 pt-3 pb-2.5 relative">
-        <div className="flex items-center gap-2 mb-1">
-          {combo.isNew && <span className="inline-block text-[9px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">{t('labels.new')}</span>}
-          {isLearn && <span className="inline-block text-[9px] font-bold text-emerald-500 bg-emerald-500/20 px-1.5 py-0.5 rounded">✔ APRENDIDO</span>}
-          {isDangerous && <span className="inline-block text-[9px] font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded flex items-center gap-1">{t('labels.situational')}</span>}
+    <div style={{ ...style, animationDelay: `${Math.min(index, 15) * 20}ms` }} onClick={openPractice} title={t('actions.practice')}
+      className={`mx-4 mb-2.5 rounded-xl overflow-hidden border border-white/10 hover:border-overlay-accent/40 hover:bg-white/[0.06] transition-all group cursor-pointer animate-combo-enter ${isLearn ? 'bg-emerald-900/10' : 'bg-white/[0.04]'} ${isDangerous ? 'shadow-[0_0_10px_rgba(220,38,38,0.08)]' : ''}`}>
+
+      <div className="px-3.5 pt-2.5 pb-2">
+        {/* Cabecera: personaje + estado · autor/versión a la derecha */}
+        <div className="flex items-center gap-2 mb-1.5 min-w-0">
+          <span className="text-[13px] font-black uppercase tracking-wider text-overlay-accent drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] flex-shrink-0">{combo.character}</span>
+          {combo.isNew && <span className="inline-block text-[9px] font-bold text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded flex-shrink-0">{t('labels.new')}</span>}
+          {isLearn && <span className="inline-block text-[9px] font-bold text-emerald-500 bg-emerald-500/20 px-1.5 py-0.5 rounded flex-shrink-0">✔ {t('filters.learned') || 'APRENDIDO'}</span>}
+          {isDangerous && <span className="inline-block text-[9px] font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded flex items-center gap-1 flex-shrink-0">{t('labels.situational')}</span>}
+          <span className="ml-auto text-[9px] font-hud text-white/30 truncate flex-shrink-0">
+            {combo.version && <span className="font-mono">{combo.version}</span>}
+            {combo.creator && ` ${t('labels.by')} ${combo.creator}`}
+          </span>
         </div>
-        
+
+        {/* Notación visual */}
         <NotationDisplay notation={combo.notation} />
-        
-        {!isTournamentMode && (
-          <div className="absolute top-2.5 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={copyDiscordLink} className="text-[9px] font-hud text-white/40 hover:text-indigo-400 transition-colors px-1.5 py-0.5 rounded bg-black/30 hover:bg-indigo-500/20 border border-white/10" title="Copiar para Discord">{copiedUrl ? '¡Copiado!' : '💬'}</button>
-            <button onClick={(e) => { e.stopPropagation(); setIsEditingNote(true) }} className="text-[9px] font-hud text-white/40 hover:text-overlay-accent transition-colors px-1.5 py-0.5 rounded bg-black/30 hover:bg-overlay-accent/10 border border-white/10" title="Añadir Nota">✏️</button>
-            <button onClick={copyNotation} className="text-[9px] font-hud text-white/40 hover:text-overlay-accent transition-colors px-1.5 py-0.5 rounded bg-black/30 hover:bg-overlay-accent/10 border border-white/10" title={t('actions.copy')}>{copied ? t('actions.copied') : '📋'}</button>
-            {combo.isCustom && <button onClick={handleDeleteCustom} className="text-[9px] font-hud text-red-400/60 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded bg-black/30 border border-red-500/20" title={t('actions.delete')}>🗑</button>}
-            <span className="text-[9px] font-hud text-overlay-accent/50">{t('actions.practice')}</span>
-          </div>
-        )}
+
+        {/* Notación textual en barra oscura con filo de acento (como la web) */}
+        <div className="mt-2 bg-black/45 border-l-[3px] border-overlay-accent/80 rounded-r px-2 py-1.5">
+          <p className="font-mono text-[11px] text-white/80 break-all leading-snug">{combo.notation}</p>
+        </div>
+
+        {/* Chips de datos: daño, hits, dificultad y propiedades */}
+        <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+          {combo.damage > 0 && (
+            <span className="text-[10px] font-hud font-bold px-2 py-0.5 rounded bg-overlay-accent/15 text-overlay-accent flex-shrink-0">
+              {combo.damage} <span className="text-overlay-accent/60 font-normal">{t('labels.damage')}</span>
+            </span>
+          )}
+          {combo.hits > 0 && (
+            <span className="text-[10px] font-hud px-2 py-0.5 rounded bg-white/10 text-white/60 flex-shrink-0">
+              {combo.hits} <span className="text-white/35">{t('labels.hits')}</span>
+            </span>
+          )}
+          {/* Dificultad como punto de color con tooltip: menos ruido visual */}
+          {combo.difficulty && (
+            <span
+              title={t(`filters.${combo.difficulty}`)}
+              className={`w-2.5 h-2.5 rounded-full flex-shrink-0 border ${combo.difficulty === 'facil' ? 'bg-green-500/80 border-green-300/40' : combo.difficulty === 'media' ? 'bg-yellow-500/80 border-yellow-300/40' : 'bg-red-500/80 border-red-300/40'}`}
+            />
+          )}
+          {combo.tags.map((tag) => <TagBadge key={tag} tag={tag} />)}
+        </div>
       </div>
 
       {isEditingNote && (
-        <div className="px-4 pb-2 no-drag" onClick={(e) => e.stopPropagation()}>
+        <div className="px-3.5 pb-2 no-drag" onClick={(e) => e.stopPropagation()}>
           <div className="flex gap-2">
-            <input type="text" value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder="Escribe tu nota aquí..." className="flex-1 bg-black/40 border border-white/20 rounded px-2 py-1 text-xs text-white outline-none focus:border-overlay-accent" autoFocus />
-            <button onClick={saveNote} className="text-[10px] px-2 py-1 bg-overlay-accent/20 text-overlay-accent rounded hover:bg-overlay-accent/30 font-bold">Guardar</button>
+            <input type="text" value={noteText} onChange={(e) => setNoteText(e.target.value)} placeholder={t('tips.note') + '...'} className="flex-1 bg-black/40 border border-white/20 rounded px-2 py-1 text-xs text-white outline-none focus:border-overlay-accent" autoFocus />
+            <button onClick={saveNote} className="text-[10px] px-2 py-1 bg-overlay-accent/20 text-overlay-accent rounded hover:bg-overlay-accent/30 font-bold">{t('actions.save')}</button>
             <button onClick={(e) => { e.stopPropagation(); setIsEditingNote(false) }} className="text-[10px] px-2 py-1 text-white/50 hover:text-white">X</button>
           </div>
         </div>
       )}
 
       {combo.customNote && !isEditingNote && (
-        <div className="px-4 pb-2">
+        <div className="px-3.5 pb-2">
           <p className="text-[10px] text-yellow-200/80 bg-yellow-900/20 border-l-2 border-yellow-500/50 pl-2 py-0.5 rounded-r">📝 {combo.customNote}</p>
         </div>
       )}
 
-      <div className="px-4 py-1.5 border-t border-white/4 flex items-center gap-2.5 min-w-0">
-        {!isTournamentMode && (
-          <>
-            <button onClick={handleToggleFavorite} className={`flex-shrink-0 text-[14px] leading-none transition-colors no-drag ${isFav ? 'text-amber-400' : 'text-white/20 hover:text-white/50'} ${justStarred ? 'animate-star-pop' : ''}`}>{isFav ? '★' : '☆'}</button>
-            <button onClick={(e) => { e.stopPropagation(); toggleLearned(combo.id) }} className={`flex-shrink-0 text-[12px] leading-none transition-colors no-drag ${isLearn ? 'text-emerald-400' : 'text-white/20 hover:text-emerald-400/50'}`} title="Marcar como aprendido">{isLearn ? '✔' : '○'}</button>
-          </>
-        )}
-        {combo.damage > 0 && <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-hud font-semibold"><span className="text-overlay-accent">{t('labels.damage')}</span><span className="text-white/90">{combo.damage}</span></span>}
-        {combo.hits > 0 && <span className="flex-shrink-0 flex items-center gap-1 text-[10px] font-hud"><span className="text-white/35">{t('labels.hits')}</span><span className="text-white/70">{combo.hits}</span></span>}
-        {combo.difficulty && <span className="flex-shrink-0 text-[9px] font-hud text-sky-300/70">{t(`filters.${combo.difficulty}`)}</span>}
-        <div className="flex items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>{combo.tags.map((tag) => <TagBadge key={tag} tag={tag} />)}</div>
-        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-          {combo.version && <span className="text-[9px] font-mono text-white/25">{combo.version}</span>}
-          {combo.creator && <span className="text-[9px] text-white/25 font-hud">{t('labels.by')} {combo.creator}</span>}
+      {/* Barra de opciones: aparece al pasar el mouse (o siempre, según ajuste) */}
+      {!isTournamentMode && (
+        <div className={`px-3.5 py-2 flex items-center gap-2 bg-black/25 transition-opacity duration-150 ${alwaysShowActions ? '' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'}`} onClick={(e) => e.stopPropagation()}>
+          <RoundButton onClick={(e) => { e.stopPropagation(); openPractice() }} title={t('actions.practice')}>▶</RoundButton>
+          <RoundButton onClick={handleToggleFavorite} title={t('tips.favorite')} active={isFav}>
+            <span className={justStarred ? 'animate-star-pop' : ''}>{isFav ? '★' : '☆'}</span>
+          </RoundButton>
+          <RoundButton onClick={handleToggleLearned} title={t('tips.learned')} active={isLearn}>✔</RoundButton>
+          <RoundButton onClick={copyNotation} title={t('actions.copy')}>📋</RoundButton>
+          <RoundButton onClick={(e) => { e.stopPropagation(); setIsEditingNote(true) }} title={t('tips.note')}>✏️</RoundButton>
+          <RoundButton onClick={copyDiscordLink} title={t('tips.discord')}>💬</RoundButton>
+          {combo.source && (
+            <RoundButton
+              onClick={(e) => { e.stopPropagation(); window.electronAPI.openVideo(combo.source!) }}
+              title={t('tips.video')}
+            >
+              🎬
+            </RoundButton>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* Línea de acento inferior: separación clara entre combos */}
+      <div className="h-[3px] bg-overlay-accent/70" />
     </div>
   )
-}
+})
+
+export default ComboCard

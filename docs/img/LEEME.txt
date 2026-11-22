@@ -1,0 +1,23 @@
+CAPTURAS PARA EL README (v3.4.0)
+================================
+
+Guarda aquí estas 4 capturas con EXACTAMENTE estos nombres (PNG).
+El README las enlaza automáticamente.
+
+1. personajes.png  — Rejilla de personajes (con las barras de progreso
+   aprendidos/total y los puntitos de frescura de caché en las esquinas).
+   Consejo: la vista con el buscador arriba y varios personajes con datos.
+
+2. combos.png  — Lista de combos de un personaje: notación visual con
+   iconos, barra de notación textual con el filo del acento, chips de
+   daño/golpes y la barra de opciones circulares (▶ ☆ ✔ 📋 ✏️ 💬 🎬).
+
+3. practica.png  — La tira de práctica encima del juego: cabecera con
+   personaje, ⏱ temporizador y 🔥 racha, y la notación con iconos.
+   Si puedes, que se vea parte del juego detrás para mostrar el overlay.
+
+4. progreso.png  — La tarjeta de progreso compartible (PNG generada por
+   el botón 📤 Compartir progreso del grid de personajes).
+
+Tamaño recomendado: 1280 px de ancho o superior (PNG).
+GitHub las muestra en el README con la tabla de la sección "📸 Capturas".

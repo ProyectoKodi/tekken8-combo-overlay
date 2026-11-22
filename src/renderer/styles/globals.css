@@ -21,12 +21,37 @@ html, body {
 #root {
   width: 100vw;
   height: 100vh;
-  background: rgba(15, 15, 22, 0.98); /* Fondo sólido oscuro para evitar bug de transparencia en Windows */
+  background: var(--bg-root, rgba(15, 15, 22, 0.98)); /* Fondo sólido oscuro para evitar bug de transparencia en Windows */
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* =========================================
+   TEMAS DE APARIENCIA: acento + tinte de fondo
+   (html[data-theme] se fija desde el store)
+   ========================================= */
+html[data-theme='dorado'] {
+  --accent-color: #fbbf24;
+  --accent-rgb: 251 191 36;
+  --bg-root: rgba(15, 15, 22, 0.98);
+}
+html[data-theme='azul'] {
+  --accent-color: #38bdf8;
+  --accent-rgb: 56 189 248;
+  --bg-root: rgba(9, 14, 25, 0.98);
+}
+html[data-theme='rojo'] {
+  --accent-color: #ef4444;
+  --accent-rgb: 239 68 68;
+  --bg-root: rgba(23, 10, 12, 0.98);
+}
+html[data-theme='verde'] {
+  --accent-color: #4ade80;
+  --accent-rgb: 74 222 128;
+  --bg-root: rgba(9, 18, 13, 0.98);
 }
 
 /* Drag region */
@@ -38,6 +63,30 @@ html, body {
 }
 .no-drag {
   -webkit-app-region: no-drag;
+}
+
+/* =========================================
+   MODO OLED: negro puro para juego nocturno
+   (html.oled se activa desde Ajustes)
+   ========================================= */
+html.oled #root {
+  background: #000;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+html.oled .bg-white\/\[0\.04\] {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+html.oled .bg-black\/45 {
+  background-color: rgba(0, 0, 0, 0.65) !important;
+}
+html.oled .bg-black\/25 {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+html.oled .bg-white\/5 {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+html.oled .bg-white\/\[0\.06\] {
+  background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 /* =========================================

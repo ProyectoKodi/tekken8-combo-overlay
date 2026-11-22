@@ -3,7 +3,10 @@ import { useOverlayStore } from '../store/overlayStore'
 import { CHARACTER_NAMES } from '../types/combo'
 
 export default function SearchBar() {
-  const { selectedCharacter, setCharacter, setFilter, filters } = useOverlayStore()
+  const selectedCharacter = useOverlayStore((s) => s.selectedCharacter)
+  const setCharacter = useOverlayStore((s) => s.setCharacter)
+  const setFilter = useOverlayStore((s) => s.setFilter)
+  const filters = useOverlayStore((s) => s.filters)
   const [value, setValue] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)

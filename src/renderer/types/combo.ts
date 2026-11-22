@@ -33,9 +33,14 @@ export interface FilterState {
 
 export const FAVORITES_SEPARATOR = { id: '__favorites_sep__' } as const
 export type FavoritesSeparator = typeof FAVORITES_SEPARATOR
-export type ComboListItem = Combo | FavoritesSeparator
-export function isSeparator(item: ComboListItem): item is FavoritesSeparator {
-  return item.id === '__favorites_sep__'
+/** Vista especial: favoritos de todos los personajes en una lista. */
+export const ROUTINE_ID = '__routine__'
+/** Separador con rótulo para listas mezcladas (p. ej. "Mi rutina"). */
+export interface ListSeparator { id: string; label: string }
+export function makeSeparator(label: string): ListSeparator { return { id: `__sep__${label}`, label } }
+export type ComboListItem = Combo | FavoritesSeparator | ListSeparator
+export function isSeparator(item: ComboListItem): item is FavoritesSeparator | ListSeparator {
+  return item.id.startsWith('__sep')
 }
 
 export interface FetchResult {
@@ -46,6 +51,17 @@ export interface FetchResult {
 }
 
 export const ALL_TAGS = ['Heat', 'Wall', 'Rage', 'CH', 'Crouch', 'Standing', 'No Wall']
+
+/**
+ * Clave de comparación de nombres de personaje: insensible a mayúsculas,
+ * puntuación ("Roger Jr." ≡ "Roger Jr") y espacios múltiples. La usan el
+ * descubrimiento de personajes y la dedupe del grid.
+ */
+export function normalizeCharName(name: string): string {
+  // Solo letras y dígitos: "Roger Jr." ≡ "Roger Jr" ≡ "rogerjr",
+  // "Miary-Zo" ≡ "Miary Zo"
+  return name.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+}
 
 export const TAG_LABELS_ES: Record<string, string> = { Heat: 'Heat', Wall: 'Pared', Rage: 'Rage', CH: 'Counter', Crouch: 'Agachado', Standing: 'De pie', 'No Wall': 'Sin pared' }
 export const DIFFICULTY_LABELS_ES: Record<string, string> = { facil: 'Fácil', media: 'Media', dificil: 'Difícil' }

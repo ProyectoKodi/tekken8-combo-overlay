@@ -8,6 +8,19 @@ import {
   rankArtUrl,
   toSlugMap,
 } from './bannerLookup'
+import { slugify, CHARACTER_ART_SLUGS } from './bannerLookup'
+
+/** Slug del arte del personaje según el mapa local (para banner://). */
+export function artSlugForCharacter(character: string): string | null {
+  if (!character) return null
+  const explicit = CHARACTER_ART_SLUGS[character]
+  if (explicit) return explicit
+  const slug = slugify(character)
+  const match = Object.values(CHARACTER_ART_SLUGS).find(
+    (k) => k === slug || k.endsWith(`-${slug}`) || k.startsWith(`${slug}-`),
+  )
+  return match ?? null
+}
 
 const backgroundFiles = import.meta.glob('../assets/banner/fondo/*.webp', {
   eager: true,
@@ -29,8 +42,8 @@ const portraitFiles = import.meta.glob('../assets/banner/personaje/*.webp', {
 
 const BACKGROUND_MAP = toSlugMap(backgroundFiles)
 
-export const RANK_ART = toSlugMap(rankFiles)
-export const PORTRAITS = toSlugMap(portraitFiles)
+const RANK_ART = toSlugMap(rankFiles)
+const PORTRAITS = toSlugMap(portraitFiles)
 
 /** Fondos disponibles para el selector del editor. */
 export const BACKGROUND_OPTIONS: Array<{ id: string; url: string }> = Object.entries(BACKGROUND_MAP)
@@ -43,8 +56,10 @@ export const bannerPortrait = (character: string): string | null => portraitUrl(
 /**
  * Fondo elegido por el usuario o, si no hay o no existe, uno determinista
  * a partir de la semilla (personaje principal).
+ * `preferred === 'custom'` usa la imagen propia del usuario (customUrl).
  */
-export function bannerBackground(preferred: string | undefined, seed: string): string | null {
+export function bannerBackground(preferred: string | undefined, seed: string, customUrl?: string): string | null {
+  if (preferred === 'custom') return customUrl || null
   if (preferred && BACKGROUND_MAP[preferred]) return BACKGROUND_MAP[preferred]
   return backgroundFor(seed, BACKGROUND_OPTIONS.map((o) => o.url))
 }

@@ -1,12 +1,12 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useMemo } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useOverlayStore } from '../store/overlayStore'
-import { isSeparator } from '../types/combo'
+import { isSeparator, ROUTINE_ID } from '../types/combo'
 import ComboCard from './ComboCard'
 
 // --- NUEVA ANIMACIÓN DE CARGA ---
 function LoadingAnimation() {
-  const { t } = useOverlayStore()
+  const t = useOverlayStore((s) => s.t)
   return (
     <div className="flex-1 flex flex-col items-center justify-center h-full gap-4 animate-fadeIn cursor-crosshair">
       {/* Anillo exterior giratorio */}
@@ -32,13 +32,34 @@ function LoadingAnimation() {
 }
 
 export default function ComboList() {
-  const { loading, error, filteredCombos, selectedCharacter, refreshCombos, t } = useOverlayStore()
+  // Selectores finos: la lista solo se re-renderiza si cambia algo de esto,
+  // no con cada parpadeo del store (toasts, opacidad, etc.)
+  const loading = useOverlayStore((s) => s.loading)
+  const error = useOverlayStore((s) => s.error)
+  const selectedCharacter = useOverlayStore((s) => s.selectedCharacter)
+  const refreshCombos = useOverlayStore((s) => s.refreshCombos)
+  const t = useOverlayStore((s) => s.t)
+  const clearFilters = useOverlayStore((s) => s.clearFilters)
+  const clearCharacter = useOverlayStore((s) => s.clearCharacter)
   const parentRef = useRef<HTMLDivElement>(null)
-  const items = filteredCombos()
+  // La filtración solo se recalcula cuando cambian sus entradas reales
+  const combos = useOverlayStore((s) => s.combos)
+  const filters = useOverlayStore((s) => s.filters)
+  const favoriteIds = useOverlayStore((s) => s.favoriteIds)
+  const learnedIds = useOverlayStore((s) => s.learnedIds)
+  const showOnlyRecent = useOverlayStore((s) => s.showOnlyRecent)
+  const recentCombos = useOverlayStore((s) => s.recentCombos)
+  const compactList = useOverlayStore((s) => s.compactList)
+  const filterFn = useOverlayStore((s) => s.filteredCombos)
+  const items = useMemo(
+    () => filterFn(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filterFn, combos, filters, favoriteIds, learnedIds, showOnlyRecent, recentCombos],
+  )
 
   const estimateSize = useCallback(
-    (index: number) => (isSeparator(items[index]) ? 28 : 130),
-    [items]
+    (index: number) => (isSeparator(items[index]) ? 28 : compactList ? 46 : 205),
+    [items, compactList]
   )
 
   const virtualizer = useVirtualizer({
@@ -71,6 +92,30 @@ export default function ComboList() {
   if (!selectedCharacter) return null
 
   if (items.length === 0) {
+    // Estado vacío con salida: cada caso sugiere la acción siguiente
+    const filtersActive = filters.searchQuery.trim() || filters.showOnlyFavorites || filters.showOnlyLearned || filters.minDamage > 0 || filters.difficulty || filters.activeTags.length > 0
+    if (selectedCharacter === ROUTINE_ID) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center cursor-crosshair">
+          <span className="text-2xl">⭐</span>
+          <p className="text-sm text-white/50 font-hud">{t('labels.routine_empty')}</p>
+          <button onClick={clearCharacter} className="mt-1 text-xs font-hud px-4 py-1.5 bg-overlay-accent/20 hover:bg-overlay-accent/40 border border-overlay-accent/30 text-overlay-accent rounded-lg transition-colors no-drag cursor-pointer">
+            {t('actions.go_chars')}
+          </button>
+        </div>
+      )
+    }
+    if (filtersActive) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center cursor-crosshair">
+          <span className="text-2xl">🔍</span>
+          <p className="text-sm text-white/50 font-hud">{t('labels.no_results_filtered')}</p>
+          <button onClick={clearFilters} className="mt-1 text-xs font-hud px-4 py-1.5 bg-overlay-accent/20 hover:bg-overlay-accent/40 border border-overlay-accent/30 text-overlay-accent rounded-lg transition-colors no-drag cursor-pointer">
+            {t('actions.clear_filters')}
+          </button>
+        </div>
+      )
+    }
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center cursor-crosshair">
         <span className="text-2xl">🥋</span>
@@ -81,13 +126,19 @@ export default function ComboList() {
   }
 
   return (
-    <div ref={parentRef} className="flex-1 min-h-0 combo-scroll cursor-crosshair">
+    <div ref={parentRef} key={selectedCharacter ?? 'none'} className="flex-1 min-h-0 combo-scroll cursor-crosshair fade-in">
       <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }} className="pt-1">
         {virtualizer.getVirtualItems().map((vItem) => {
           const listItem = items[vItem.index]
           return (
             <div
               key={vItem.key}
+              // data-index + measureElement: el virtualizador mide la altura
+              // REAL de cada tarjeta (los combos largos ocupan 2+ líneas) y
+              // recalcula el layout con un ResizeObserver. Sin esto, las
+              // tarjetas altas se solapan con la siguiente.
+              data-index={vItem.index}
+              ref={virtualizer.measureElement}
               style={{
                 position: 'absolute', top: 0, left: 0, width: '100%',
                 transform: `translateY(${vItem.start}px)`,
@@ -97,7 +148,7 @@ export default function ComboList() {
                 <div className="mx-4 my-1 flex items-center gap-2">
                   <div className="h-px flex-1 bg-white/8" />
                   <span className="text-[9px] font-hud text-white/25 uppercase tracking-widest">
-                    {t('labels.all_combos') || 'Todos los combos'}
+                    {'label' in listItem && listItem.label ? listItem.label : t('labels.all_combos') || 'Todos los combos'}
                   </span>
                   <div className="h-px flex-1 bg-white/8" />
                 </div>

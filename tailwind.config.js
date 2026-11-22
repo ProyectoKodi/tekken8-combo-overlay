@@ -8,8 +8,9 @@ module.exports = {
           bg: 'rgba(10, 10, 15, 0.88)',
           surface: 'rgba(20, 20, 32, 0.92)',
           border: 'rgba(255, 255, 255, 0.08)',
-          // --- MEJORA #9: Usar variable CSS para el color de acento ---
-          accent: 'var(--accent-color, #e8a020)', // Dorado por defecto
+          // Acento por triplet RGB: así los modificadores /NN de Tailwind
+          // componen transparencias de verdad con el color del tema.
+          accent: 'rgb(var(--accent-rgb, 232 160 32) / <alpha-value>)',
           muted: 'rgba(255, 255, 255, 0.45)',
         },
         tag: {

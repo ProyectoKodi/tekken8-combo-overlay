@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useOverlayStore } from '../store/overlayStore'
 import type { SortKey } from '../types/combo'
 import { ALL_TAGS, isSeparator } from '../types/combo'
@@ -14,9 +14,26 @@ const TAG_COLORS: Record<string, string> = {
 }
 
 export default function FilterBar() {
-  const { filters, toggleTag, setFilter, clearFilters, filteredCombos, combos, fromCache, loading, favoriteIds, learnedIds, t } = useOverlayStore()
+  // Selectores finos: solo re-render si cambia un filtro, una lista o un set
+  const filters = useOverlayStore((s) => s.filters)
+  const toggleTag = useOverlayStore((s) => s.toggleTag)
+  const setFilter = useOverlayStore((s) => s.setFilter)
+  const clearFilters = useOverlayStore((s) => s.clearFilters)
+  const fromCache = useOverlayStore((s) => s.fromCache)
+  const loading = useOverlayStore((s) => s.loading)
+  const favoriteIds = useOverlayStore((s) => s.favoriteIds)
+  const learnedIds = useOverlayStore((s) => s.learnedIds)
+  const t = useOverlayStore((s) => s.t)
+  const combos = useOverlayStore((s) => s.combos)
+  const showOnlyRecent = useOverlayStore((s) => s.showOnlyRecent)
+  const recentCombos = useOverlayStore((s) => s.recentCombos)
+  const filterFn = useOverlayStore((s) => s.filteredCombos)
   const [lastPulsedTag, setLastPulsedTag] = useState<string | null>(null)
-  const displayed = filteredCombos().filter((item) => !isSeparator(item))
+  const displayed = useMemo(
+    () => filterFn().filter((item) => !isSeparator(item)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filterFn, combos, filters, favoriteIds, learnedIds, showOnlyRecent, recentCombos],
+  )
   const hasFavorites = favoriteIds.size > 0
   const hasLearned = learnedIds.size > 0
   const showOnlyFavorites = filters.showOnlyFavorites ?? false

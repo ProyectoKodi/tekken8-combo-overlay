@@ -31,3 +31,4 @@ yarn-error.log*
 
 # Datos de usuario de electron-store
 # (viven en %APPDATA%, no en el proyecto)
+discord-assets/

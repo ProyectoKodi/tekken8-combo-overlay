@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useOverlayStore } from '../store/overlayStore'
 import { CHARACTER_NAMES } from '../types/combo'
 import type { RankData } from '../types/rank'
@@ -12,8 +12,13 @@ const RANGOS = TEKKEN_RANKS
 const PERSONAJES = CHARACTER_NAMES
 
 const RankTracker: React.FC = () => {
-  const { tekkenId, setTekkenId, rankData, setRankData, t } = useOverlayStore()
+  const tekkenId = useOverlayStore((s) => s.tekkenId)
+  const setTekkenId = useOverlayStore((s) => s.setTekkenId)
+  const rankData = useOverlayStore((s) => s.rankData)
+  const setRankData = useOverlayStore((s) => s.setRankData)
+  const t = useOverlayStore((s) => s.t)
   const [isEditing, setIsEditing] = useState(false)
+  const bgRowRef = useRef<HTMLDivElement>(null)
   const [formData, setFormData] = useState(rankData || {
     playerName: '',
     tekkenIdCode: '',
@@ -31,18 +36,29 @@ const RankTracker: React.FC = () => {
     lastSeen: 'hace unos momentos'
   })
 
+  // La fila de fondos hace scroll horizontal con la rueda del mouse
+  useEffect(() => {
+    const el = bgRowRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY === 0) return
+      e.preventDefault()
+      el.scrollLeft += e.deltaY
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [isEditing])
+
   useEffect(() => {
     if (rankData) setFormData(rankData)
   }, [rankData])
 
-  const handleSave = () => {
-    setTekkenId(formData.playerName)
+  const handleSave = () => {    setTekkenId(formData.playerName)
     setRankData(formData)
     setIsEditing(false)
   }
 
   const handleClear = () => {
-    localStorage.removeItem('t8_rank_data')
     setRankData(null)
     setFormData({
       playerName: '', tekkenIdCode: '', rank: 'Beginner', points: '0', glicko: '', prowess: '', region: '', mainChar: 'Heihachi', wins: 0, losses: 0, platform: 'Steam', language: 'Spanish (Español)', message: '', lastSeen: 'hace unos momentos'
@@ -82,27 +98,61 @@ const RankTracker: React.FC = () => {
           🌐 Consultar en EWGF.gg
         </button>
 
-        <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1">
+        <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto pr-1"
+          onKeyDown={(e) => {
+            // Enter guarda y Escape cierra (estándar en formularios).
+            // No interferimos con botones ni desplegables.
+            const el = e.target as HTMLElement
+            if (el.tagName === 'BUTTON' || el.tagName === 'SELECT') return
+            if (e.key === 'Enter') { e.preventDefault(); handleSave() }
+            else if (e.key === 'Escape') { e.stopPropagation(); setIsEditing(false) }
+          }}
+        >
           <div>
             <label className={labelStyle}>Fondo del banner</label>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setFormData({...formData, background: undefined})}
-                className={`h-9 w-16 shrink-0 rounded border text-[9px] font-bold uppercase transition-colors ${!formData.background ? 'border-overlay-accent bg-overlay-accent/20 text-overlay-accent' : 'border-white/15 text-white/40 hover:text-white/70'}`}
-                title="Elegir automáticamente según el personaje"
-              >
-                Auto
-              </button>
-              {BACKGROUND_OPTIONS.map((bg) => (
+            <div
+              ref={bgRowRef}
+              className="flex items-center gap-1.5 overflow-x-auto pb-1"
+              style={{ scrollbarWidth: 'thin' }}
+            >
+              <div className="flex items-center gap-1.5 w-max">
                 <button
-                  key={bg.id}
-                  onClick={() => setFormData({...formData, background: bg.id})}
-                  className={`h-9 w-16 shrink-0 overflow-hidden rounded border transition-all ${formData.background === bg.id ? 'border-overlay-accent ring-1 ring-overlay-accent' : 'border-white/15 hover:border-white/40'}`}
-                  title={bg.id}
+                  onClick={async () => {
+                    const res = await window.electronAPI.pickBannerImage()
+                    if (res.ok && res.url) {
+                      // El main ya persistió la preferencia; refrescamos el estado
+                      // del store para que el banner la use al instante
+                      useOverlayStore.setState({ customBannerUrl: res.url })
+                      setFormData({...formData, background: 'custom'})
+                      // Aplicar también al perfil en vivo: el fondo no depende de
+                      // pulsar Guardar y sobrevive al reinicio aunque no se guarde
+                      const current = useOverlayStore.getState().rankData
+                      setRankData({ ...(current ?? DEFAULT_PROFILE), background: 'custom' })
+                    }
+                  }}
+                  className={`h-9 w-9 shrink-0 rounded border text-[10px] font-bold transition-colors ${formData.background === 'custom' ? 'border-overlay-accent bg-overlay-accent/20 text-overlay-accent' : 'border-white/15 text-white/40 hover:text-white/70'}`}
+                  title={t('tips.pick_image')}
                 >
-                  <img src={bg.url} alt={bg.id} className="h-full w-full object-cover" />
+                  📁
                 </button>
-              ))}
+                <button
+                  onClick={() => setFormData({...formData, background: undefined})}
+                  className={`h-9 w-16 shrink-0 rounded border text-[9px] font-bold uppercase transition-colors ${!formData.background ? 'border-overlay-accent bg-overlay-accent/20 text-overlay-accent' : 'border-white/15 text-white/40 hover:text-white/70'}`}
+                  title={t('filters.auto_bg') || 'Auto'}
+                >
+                  Auto
+                </button>
+                {BACKGROUND_OPTIONS.map((bg) => (
+                  <button
+                    key={bg.id}
+                    onClick={() => setFormData({...formData, background: bg.id})}
+                    className={`h-9 w-16 shrink-0 overflow-hidden rounded border transition-all ${formData.background === bg.id ? 'border-overlay-accent ring-1 ring-overlay-accent' : 'border-white/15 hover:border-white/40'}`}
+                    title={bg.id}
+                  >
+                    <img src={bg.url} alt={bg.id} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <div>
@@ -125,15 +175,9 @@ const RankTracker: React.FC = () => {
                 {PERSONAJES.map(p => <option key={p} value={p} className="bg-neutral-900">{p}</option>)}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className={labelStyle}>Glicko (μ)</label>
-              <input type="text" value={formData.glicko} onChange={(e) => setFormData({...formData, glicko: e.target.value})} placeholder="μ 1327" className={inputStyle} />
-            </div>
-            <div>
-              <label className={labelStyle}>Prowess</label>
-              <input type="text" value={formData.prowess} onChange={(e) => setFormData({...formData, prowess: e.target.value})} placeholder="248.183" className={inputStyle} />
-            </div>
+          <div>
+            <label className={labelStyle}>Prowess</label>
+            <input type="text" value={formData.prowess} onChange={(e) => setFormData({...formData, prowess: e.target.value})} placeholder="248.183" className={inputStyle} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -152,20 +196,6 @@ const RankTracker: React.FC = () => {
           <div>
             <label className={labelStyle}>Mensaje</label>
             <input type="text" value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} placeholder="¡A pelear!" className={inputStyle} />
-          </div>
-          <div>
-            <label className={labelStyle}>Última conexión</label>
-            <input type="text" value={formData.lastSeen} onChange={(e) => setFormData({...formData, lastSeen: e.target.value})} placeholder="hace 3 días" className={inputStyle} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className={labelStyle}>Victorias</label>
-              <input type="number" min={0} value={formData.wins ?? 0} onChange={(e) => setFormData({...formData, wins: Math.max(0, Number(e.target.value) || 0)})} className={inputStyle} />
-            </div>
-            <div>
-              <label className={labelStyle}>Derrotas</label>
-              <input type="number" min={0} value={formData.losses ?? 0} onChange={(e) => setFormData({...formData, losses: Math.max(0, Number(e.target.value) || 0)})} className={inputStyle} />
-            </div>
           </div>
         </div>
 

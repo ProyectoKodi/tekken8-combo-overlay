@@ -58,3 +58,585 @@ $ electron .               # arranque limpio + migración de ids (1.057 reescrit
 - **Perfil de rango manual.** Los scrapers de Wavu Wank / EWGF.gg dependen de terceros y de una API key.
 - **`resources/yt-dlp.exe`** se empaqueta pero no se usa.
 - **Sin pruebas de UI** (requieren Electron y un entorno gráfico): se verifica el arranque, no el aspecto visual.
+
+## 5. Segunda ronda — limpieza de deuda (2026-11-20, ver. 3.3.1)
+
+| Área | Problema | Corrección |
+|---|---|---|
+| `src/main/playerScraper.ts` | Fallbacks inventados (rank "God of Destruction", puntos "245856", "SpringanVnzla", Tekken ID "2MJ4-GEqa-Dqrj") que parecían datos reales del jugador | Campos sin dato real devuelven cadena vacía; la UI ya oculta los campos vacíos |
+| `src/main/cache.ts`, `ipc-handlers.ts` | `getSlugForCharacter` descargaba el índice de la web en cada llamada | Caché de slugs por personaje (`slugs` en `combo-cache`); el índice solo se baja la primera vez |
+| `src/main/scraper.ts` | El parser no tenía pruebas contra HTML real | `parseCombosFromHtml`/`extractNextPageUrl` exportadas + fixture `tests/fixtures/combo-page.html` con 8 pruebas (`scraperFixture.test.ts`) |
+| `package.json`, `electron-builder.yml` | `yt-dlp.exe` (23 MB) empaquetado sin uso | Quitado de `extraResources`; pendiente borrar `resources/yt-dlp.exe` del disco |
+| `src/main/userPrefs.ts` (nuevo) | Preferencias partidas entre `electron-store` y `localStorage` del renderer | Tema, idioma, Tekken ID, recientes y ficha de rango ahora viven en `user-prefs` (main) con migración única desde localStorage |
+| `ipc-handlers.ts` | "Exportar perfil" no incluía las preferencias | Exporta `prefs: {theme, language, tekkenId, rankData}`; importar restaura preferencias y refresca favoritos en la UI |
+| `src/main/ipc-handlers.ts` | Importar perfil no validaba la forma del JSON | Se valida `Array.isArray`/`typeof` antes de fusionar |
+
+Verificación: `npm run typecheck` sin errores · `npm test` 35/35 · `npm run build` OK.
+
+## 6. Tercera ronda — UX del overlay (2026-11-21)
+
+| Rec. | Cambio |
+|---|---|
+| Bug candado | `clickThroughEnabled` + zona segura dinámica: el mouse solo se reactiva sobre `[data-safe]` (barra superior); el 🔒 se puede desbloquear con clic sin F8 |
+| 1. Feedback del candado | 🔒 con anillo rojo y pulso mientras está activo + toast de pista la primera vez |
+| 2. Posición de ventana | Nuevo `src/main/windowState.ts`: guarda bounds (debounce en move/resize y al cerrar) y los restaura validando contra las pantallas conectadas |
+| 4. Atajos reasignables | `hotkeys.ts` configurable vía user-prefs (`F8/F9/F1/F3` por defecto); editor de captura de teclas en el modal de ayuda; valida duplicados y reverte si el registro global falla |
+| 5. Sync honesto | `sync-all-characters` devuelve `failed: string[]` (toast con los fallados); progreso en la barra de tareas (`setProgressBar`); antigüedad del caché junto al botón Recargar |
+| 6. Escala de UI | Selector 90/100/125/150% en la barra de controles, persistido en user-prefs, aplicado con `zoom` de Chromium |
+| 8. Cierre en tareas largas | `close-window` se ignora mientras `syncRunning` y la UI recibe `sync-in-progress` (toast) |
+| 9. Toasts unificados | Nuevo `toastStore` + `Toasts.tsx` (esquina inferior derecha, 4 tipos, clic para descartar); reemplaza los textos efímeros de ComboCard, SyncAllButton y el aviso de cierre |
+| Locales | Secciones `toasts`, `hotkeys` y `settings` añadidas a es/en/pt |
+
+Verificación: `npm run typecheck` sin errores · `npm test` 35/35 · `npm run build` OK.
+
+## 7. Cuarta ronda — simplificación de la UI (2026-11-21)
+
+Eliminada la función de combos personalizados y reubicados los controles:
+
+- **Añadir combo personalizado:** fuera el formulario, el atajo F1, los handlers IPC (`add/get/delete/save-custom-combo`, `fetch-youtube-meta`), el estado `customCombos` del store y el botón 🗑 de las tarjetas.
+- **Importar/exportar combos custom:** fuera del botón Sync.
+- **Sync:** ahora es un botón pill (estilo «Enfoque») en la cabecera: `SyncButton.tsx`.
+- **Importar/exportar perfil:** movido al banner del jugador (botones ⬇/⬆ junto al ⚙️ en `PlayerBanner.tsx`); el perfil ya no incluye customCombos.
+- Locales depurados (claves sin uso) y `toasts.imported` sin contador.
+- Pendiente de borrado en disco (stubbed): `AddComboForm.tsx`, `SyncAllButton.tsx`.
+
+Verificación: `npm run typecheck` sin errores · `npm test` 35/35 · `npm run build` OK.
+
+## 8. Quinta ronda — ajustes finales (2026-11-21)
+
+- **UI scale (reparación definitiva):** se sustituye el `zoom` CSS por el zoom
+  nativo de Chromium (`webContents.setZoomFactor`); la ventana se redimensiona
+  en la misma proporción y se acota al área de trabajo de su pantalla, de modo
+  que 125% y 150% ya no cortan la interfaz. El zoom también se aplica al arrancar.
+- **Overlay de práctica:** al cerrar la ventana principal (o la app) se cierra
+  también la tira superior (`closePracticeWindow()` en 'closed' y 'will-quit').
+
+Verificación: `npm run typecheck` sin errores · `npm test` 35/35 · `npm run build` OK.
+
+## 9. Sexta ronda — tira de práctica (2026-11-21)
+
+La tira superior (modo práctica) mostraba los iconos del combo recortados al
+cambiar la escala de la UI:
+
+- Aislamiento de zoom: `webContents.setZoomFactor(1)` forzado al cargar; la
+  escala de la ventana principal nunca la afecta.
+- Alto de la ventana 45 → 64 px; iconos 22 → 26 px: el contenido ya no va al límite.
+
+## 10. Séptima ronda (2026-11-21)
+
+- **UI scale limitada a 125%** (opción 150% eliminada del selector; el main
+  también acota, y los valores guardados mayores se recortan al arrancar).
+- **Barra de práctica:** los combos largos ya se recorren con la rueda del
+  mouse (la tira hace scroll horizontal en vez de cortarse).
+- **Fix de tags de escenario** en la barra: mostraba la ruta cruda
+  (`filters.tags.Stage: ...`); ahora muestra "📍 <escenario>".
+
+## 11. Octava ronda — recomendaciones de entrenamiento 1 y 2 (2026-11-21)
+
+**1. Modo drill en la tira de práctica:**
+- `practiceWindow.ts`: al abrir un combo se carga la lista cacheada del
+  personaje como lista de drill (`drillList`/`drillIndex`); `navigatePractice(±1)`
+  recorre circularmente y envía `{combo, index, total}` a la tira.
+- Atajos reasignables F7 (siguiente) / F6 (anterior); botones ◀▶ en la cabecera
+  de la tira + indicador "12/45".
+- Payload de `practice-combo` / `get-pending-practice-combo` ahora incluye
+  index/total; sin caché, la tira muestra solo el combo abierto.
+
+**2. Progreso de maestría por personaje:**
+- `getAllCachedCombos()` en `cache.ts` + handler `get-mastery-progress` que
+  cuenta aprendidos vs total cacheado por personaje.
+- El selector de personajes muestra barra de progreso y "12/45" bajo cada
+  retrato (verde al 100%).
+
+Verificación: `npm run typecheck` sin errores · `npm test` 35/35 · `npm run build` OK.
+
+## 12. Novena ronda — recomendaciones 8, 9 y 10 (2026-11-21)
+
+**8. Discord Rich Presence (sin dependencias nativas):**
+- Nuevo `src/main/discordPresence.ts`: cliente del pipe nativo de Discord
+  (`\.\pipe\discord-ipc-0..9`, framing u32 opcode + JSON). Handshake,
+  SET_ACTIVITY, ping/pong y reconexión silenciosa.
+- Se publica al abrir/navegar en práctica: "Modo práctica · <personaje>"
+  / "Combo i/N"; se limpia al cerrar. Configuración del Client ID y estado
+  (conectado / Discord no abierto / sin ID) en la Ayuda, persistido en prefs.
+
+**9. Aviso de combos nuevos:**
+- `pendingNews` en combo-extras: el Sync acumula nuevos por personaje;
+  `fetch-combos` los consume cuando el usuario ve el personaje.
+- Al arrancar, toast agregado "N combos nuevos por revisar: A, B, +k";
+  toast inmediato "+n combos nuevos de <char>" al detectarlos.
+
+**10. Personalización visual:**
+- Fondo propio del banner: botón 📁 en el editor copia la imagen a userData
+  (`pick-banner-image`) y el banner la usa con background='custom'. Va en el
+  perfil exportado.
+- Tira de práctica arriba/abajo: botón ⬍ en la barra, persistido
+  (`practicePosition`) y reubicación inmediata.
+
+Verificación: `npm run typecheck` sin errores · `npm test` 35/35 · `npm run build` OK.
+
+## 13. Décima ronda — assets de Discord y vídeo flotante (2026-11-21)
+
+**Discord: imagen del personaje + emblema de rango:**
+- `discordPresence.ts` admite assets (`large_image/text` = personaje,
+  `small_image/text` = rango) resueltos con `bannerLookup` (slugs idénticos a
+  los archivos del juego: marshall-law, tekkenking…).
+- `scripts/prepare-discord-assets.mjs` (`npm run discord:assets`): convierte
+  los webp a PNG 512×512 en `discord-assets/` (43 retratos + 39 emblemas) con
+  un LEEME.txt con los pasos de subida al portal. Claves = nombre sin extensión.
+- Se envían solo si el usuario los subió; sin assets la actividad funciona igual.
+
+**Vídeo del combo en ventana flotante (sin navegador):**
+- `scraper.ts` captura el enlace de YouTube de cada combo (`source`), con test
+  en el fixture.
+- `videoWindow.ts`: mini-ventana 560×352 sin marco, always-on-top, YouTube
+  embebido con autoplay (`autoplayPolicy: 'no-user-gesture-required'`), ✕ y
+  Escape para cerrar. Se cierra junto con el programa.
+- Botón 🎬 en la tarjeta de combo cuando tiene vídeo.
+
+Verificación: `npm run typecheck` sin errores · `npm test` 35/35 · `npm run build` OK ·
+assets generados (43+39).
+
+## 14. Application ID oficial horneado (2026-11-21)
+
+- `DEFAULT_DISCORD_CLIENT_ID = '1573748294792777819'` (aplicación oficial del
+  proyecto). Con él horneado, todos los usuarios tienen Rich Presence con
+  imágenes sin configurar nada; el campo de Ayuda queda como override opcional.
+- Falta pendiente del propietario: subir los 82 assets (`npm run discord:assets`)
+  al portal de ESA aplicación para que las imágenes salgan para todos.
+
+Verificación: `npm run typecheck` sin errores · `npm test` 35/35 · `npm run build` OK.
+
+## 15. Fix: fondo de banner propio (2026-11-21)
+
+- Bug 1: al elegir imagen, `customBannerUrl` se guardaba en main pero el
+  estado del renderer no se actualizaba → banner la ignoraba. Ahora
+  RankTracker sincroniza el store al instante (`setCustomBannerUrl`).
+- Bug 2: `file://` no carga como `<img>` cuando el renderer se sirve por http
+  (webSecurity). Nuevo protocolo privilegiado `banner://local/<archivo>`
+  (`src/main/bannerProtocol.ts`) que sirve solo los archivos
+  `banner-custom*` de userData; funciona en dev y producción.
+
+## 16. Fix: reproductor de vídeo en negro (2026-11-21)
+
+- User-Agent de Chrome real en la ventana de vídeo (YouTube a veces bloquea
+  o degrada embeds a clientes con UA de Electron).
+- Embed por `www.youtube.com` en vez de `youtube-nocookie` (problemas de
+  cookies/consent en contextos embebidos) + `playsinline` + `iv_load_policy=3`.
+- Respaldo en la barra: botón "↗ YouTube" que abre el vídeo en el navegador
+  del usuario si el embed está restringido por el dueño del vídeo.
+- Logging de `did-fail-load` y consola del embed en el log del main para
+  diagnóstico.
+
+## 17. Fix vídeo por CSP + avisos con retrato (2026-11-21)
+
+- **Causa raíz del reproductor negro confirmada por el log del usuario:**
+  `ERR_BLOCKED_BY_CSP`. La CSP del index.html tenía `default-src 'self'` sin
+  `frame-src` → bloqueaba el iframe de YouTube. Añadido
+  `frame-src https://www.youtube.com https://www.youtube-nocookie.com`,
+  `img-src ... banner:` (protocolo propio) y ampliado `connect-src`.
+- **Avisos de combos nuevos destacados:** los toasts admiten retratos
+  (`images`); el toast sale más grande con el retrato del personaje
+  (arte local, hasta 3 apilados en el aviso agregado al arrancar).
+
+## 18. Vídeo a 720p automático (2026-11-21)
+
+YouTube elige la calidad según el tamaño del reproductor (a 560 px arranca en
+360p). El iframe ahora se renderiza a 1280×720 reales y se escala con CSS
+(`transform: scale`) al tamaño de la ventana, con `ResizeObserver` para
+recalcular al redimensionar. Resultado: siempre 720p, visualmente ajustado.
+
+## 19. Notificaciones de combos nuevos: dedupe + clic + badge persistente (2026-11-21)
+
+- **Dedupe:** el store de toasts ignora un push con mensaje idéntico al de un
+  toast visible (eliminaba la duplicación por dobles fetch/StrictMode).
+- **Clic → personaje:** los toasts admiten `action`; el aviso agregado abre el
+  primer personaje con noticias (si su caché expiró, el fetch re-sincroniza
+  solo). Cursor y tooltip indican que es clicable.
+- **Badge NUEVO persistente:** `newHashes` guarda los hashes nuevos sin revisar
+  (los detecta el Sync); al abrir el personaje por caché se marcan con NUEVO y
+  al mismo tiempo se consumen (badge y noticia), porque ya los está viendo.
+- `fetch-combos` reescrito con semántica coherente: fresh scrape re-evalúa
+  desde cero; vista por caché marca desde newHashes y consume al instante.
+
+## 20. Fix fondo propio + 7 fondos nuevos (2026-11-21)
+
+- **Bug de persistencia del fondo propio:** `initPrefs` no cargaba
+  `customBannerUrl` en el estado del renderer (se guardaba en main pero al
+  reiniciar el banner quedaba en negro). Ahora se carga al arrancar.
+- Al elegir imagen, el fondo se aplica al perfil en vivo (no depende de pulsar
+  Guardar) y si el archivo falla, el banner cae al fondo automático en vez de
+  negro (`onError` + fallback).
+- **7 fondos nuevos** (banner-bg-1, 2, 5, 6, 7, 8, 9 añadidos a los 3
+  anteriores): 10 fondos integrados en total, generados con `npm run assets`.
+
+## 21. Scrollbar de la fila de fondos (2026-11-21)
+
+- La fila de miniaturas de fondo desbordaba el panel y su scrollbar horizontal
+  aparecía al final del formulario entero. Ahora la fila tiene su propio
+  `overflow-x-auto` (scrollbar fino del acento justo bajo las miniaturas,
+  donde corresponde) y además se recorre con la rueda del mouse.
+
+## 22. Tooltips multiidioma (2026-11-21)
+
+- Los tooltips de toda la app estaban escritos a mano en español (barra de
+  opciones de las tarjetas, controles de ventana, tira de práctica, vídeo,
+  banner…). Creada la sección `tips` en es/en/pt (~28 claves) y pasados todos
+  los `title=` a `t()`, incluidos los que faltaban (minimizar, cerrar).
+- Alias extra: `filters.auto_bg` (botón Auto del fondo) y
+  `toasts.discord_saved`. El placeholder de la nota también usa la traducción.
+
+## 23. Revisión integral: rendimiento + código huérfano (2026-11-21)
+
+### Eliminado (huérfanos sin ninguna función)
+- `AddComboForm.tsx` y `SyncAllButton.tsx` (stubs vacíos autorizados a borrar).
+- `utils/generateComboImage.ts` (nadie lo importaba; el bundle nunca lo incluyó).
+- `main/playerScraper.ts` completo: sus dos IPC (`fetch-player-stats`,
+  `fetch-player-stats-api-key`) tenían 0 llamadas desde la UI.
+- IPC sin uso: `get-character-list`, `is-favorite`, `get-custom-notes`
+  (handlers + preload + electron.d.ts).
+- `cache.getCacheInfo` (export sin llamador).
+- Carpeta vacía `resources/` fuera del paquete.
+
+### Rendimiento (main)
+- **Bug real en `sync-all-characters`: había un bloque entero duplicado** que
+  volvía a procesar cada scrape, escribir el caché dos veces y recalcular
+  `comboHash` 3 veces por combo. Ahora se calcula 1 vez y se escribe 1 vez
+  (~la mitad de trabajo y de escrituras en disco por personaje).
+- **El caché guardaba el HTML crudo de la web** (`rawHtml`) que nunca se leía:
+  electron-store mantiene todo el JSON en memoria y reescribe el archivo
+  entero en cada `set`, así que cada sync serializaba megas inútiles. Eliminado.
+- Las entradas de caché expiradas ahora se purgan al leerlas (antes quedaban
+  en disco para siempre).
+- `fetch-combos` reutiliza los hashes calculados (antes re-hasheaba todo 2×).
+- El watcher de Tekken usa `execFile` (sin shell cmd.exe cada 3 s).
+
+### Rendimiento (renderer)
+- Todos los componentes suscribían al store ZUSTAND ENTERO
+  (`useOverlayStore()` sin selector): cualquier cambio repintaba toda la app.
+  Ahora todos usan selectores por campo.
+- `ComboCard` envuelto en `React.memo` + selectores: una tarjeta solo se
+  re-renderiza si cambia su combo/estado; desplazarse ya no re-parsea las
+  notaciones visibles (`useMemo` + `memo` en NotationDisplay/RenderToken).
+- `ComboList`/`FilterBar`: filtrado memoizado con `useMemo` (solo se recalcula
+  cuando cambian combos, filtros o los sets de favoritos/aprendidos).
+- `UpdateBanner` traducido (sección `update` en los 3 idiomas).
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 24. Seis mejoras nuevas (2026-11-21)
+
+1. **Auto-descubrimiento de personajes nuevos (DLC):** en cada Sync se baja
+   el índice de la web (`discoverCharacters` en scraper.ts) y los slugs
+   desconocidos se registran en `discoveredCharacters` (user-prefs),
+   se scrapean en el mismo pase (con badge NUEVO y pendingNews) y se notifican
+   con un toast clicable que abre el personaje. El selector los integra vía
+   `get-dynamic-characters` (merge con CHARACTER_SLUGS).
+
+2. **Modo mini-tarjeta de la tira de práctica:** botón − / ⤢ alterna tira
+   completa (ancho, arriba/abajo) y tarjeta compacta 300×52 anclada a la
+   esquina, con cuerpo arrastrable (drag-region), posición persistida
+   (`practiceMiniPos`) y estado en `practiceMini`. IPC: get-practice-mini,
+   toggle-practice-mini (on), evento practice-mini.
+
+3. **Respaldo automático del perfil:** cada 7 días, al arrancar, se escribe
+   el mismo JSON que "Exportar perfil" en userData/backups/perfil-<fecha>.json
+   con rotación de 3 copias (backupProfileIfDue). Restaurar = importar ese
+   archivo con el botón ⬆ existente.
+
+4. **"Mi rutina":** botón ⭐ en el selector que carga los favoritos de TODOS
+   los personajes cacheados en una lista continua con separadores por
+   personaje (IPC get-routine-combos, makeSeparator/isSeparator
+   generalizados, ROUTINE_ID en el store con loadRoutine).
+
+5. **Compartir progreso:** botón 📤 que genera un PNG 1000×560 en canvas
+   (totales + top 5 de maestría con barras y retratos). Retratos copiados a
+   userData/personaje al arrancar (prewarmSharePortraits) y servidos por
+   banner:// con corsEnabled (canvas sin taint → toBlob funciona). Copia al
+   portapapeles + descarga automática.
+
+6. **Exportar/importar** ya existía: el respaldo usa el mismo formato, así
+   que restaura con ⬆.
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 25. Cinco mejoras de comportamiento/usabilidad (2026-11-21)
+
+1. **Onboarding guiado:** componente Onboarding.tsx con 3 pasos (elegir
+   personaje → sincronizar → practicar), puntos de progreso, saltar/empezar.
+   Se muestra una sola vez (pref `onboarded`) tras cargar preferencias.
+2. **Hover inteligente en tarjetas:** la barra de opciones aparece al pasar
+   el mouse (con group-focus-within para teclado). Ajuste "Botones de acción
+   siempre visibles" (pref `alwaysShowActions`) en Ayuda → Ajustes.
+3. **Selección persistente:** `setCharacter` guarda `lastCharacter`;
+   `initPrefs` restaura la última vista (personaje o rutina) si
+   `restoreLastView` (ajuste en Ayuda → Ajustes, por defecto activo).
+4. **Enter/Escape en formularios:** el editor de perfil guarda con Enter y
+   cierra con Escape (sin interferir con botones ni desplegables).
+5. **Estados vacíos con salida:** filtros activos → botón "Quitar filtros";
+   rutina vacía → texto + botón "Ir a personajes"; el resto mantiene su
+   mensaje por defecto.
+
+Extra: toast de Discord ahora traducido (toasts.discord_saved).
+Claves nuevas: onboarding.*, settings.{title,always_actions,restore_last_view,
+_hints}, labels.{no_results_filtered,routine_empty},
+actions.{clear_filters,go_chars}.
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 26. Cuatro mejoras visuales (2026-11-21)
+
+1. **Jerarquía de color en las tarjetas:** el daño ahora lleva el color del
+   acento (dato primario), hits en gris suave y la dificultad es un punto
+   de color (verde/amarillo/rojo) con tooltip, en vez de un chip completo.
+2. **Modo OLED:** fondo negro puro (#root #000) con tarjetas/barras
+   oscurecidas vía CSS (html.oled). Ajuste en Ayuda → Ajustes
+   (pref `oled`), aplicado con una clase en <html> al arrancar.
+3. **Transición entre vistas:** la lista se remonta con fade-in de 150ms
+   (key por personaje) al cambiar de personaje/rutina.
+4. **Avatar en la cabecera:** la barra del personaje muestra su retrato
+   local (bannerAssets) junto al nombre.
+5. **Indicador de Tekken:** puntito verde/rojo "Tekken" en la barra superior
+   con tooltip (watcher existente + IPC get-tekken-status y evento
+   tekken-status en cada cambio del watcher).
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 27. Ajustes de pulido (2026-11-21)
+
+- **Indicador de Tekken más visible:** ahora es una píldora con borde
+  (verde con halo y punto pulsante cuando el juego corre; gris neutra cuando
+  no), en vez de un puntito pequeño.
+- **Modal de Ayuda sin corte:** el panel ahora tiene altura máxima
+  (calc(100vh-2rem)), cabecera y pie fijos, y el contenido hace scroll
+  propio (custom-scroll). Antes el contenido se cortaba con la ventana.
+
+## 28. Ajustes que la gente pide (2026-11-21)
+
+1. **Lista compacta (densidad configurable):** botón ▤/≡ en la barra del
+   personaje alterna tarjetas cómodas ↔ una línea por combo (★ + notación
+   textual + punto de dificultad + daño + ✔). El virtualizador usa altura
+   estimada de 46px en compacto. Aplica también a "Mi rutina" (pref
+   `compactList`).
+2. **Sonido al marcar aprendido:** "ding" sutil de dos notas (Web Audio,
+   sin assets) al completar un combo con ✔. Desactivado por defecto; el
+   switch de Ajustes hace sonar una muestra al activarlo (pref
+   `soundFeedback`).
+3. *(El indicador de Tekken — tercera pieza del grupo — ya quedó en la ronda 27.)*
+
+Claves nuevas: settings.{compact_list,sound_feedback} + hints.
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 29. Fix: IPC duplicado abortaba el registro (2026-11-21)
+
+- `get-practice-mini` se registraba dos veces (ipc-handlers + practiceWindow).
+  El segundo `ipcMain.handle` lanzaba "Attempted to register a second
+  handler" y abortaba el resto de `registerIpcHandlers`: quedaban muertos
+  get-hotkeys, get-auto-launch, get-discord-status, get-tekken-status, etc.
+- Eliminado el registro duplicado en ipc-handlers (queda en practiceWindow,
+  junto a toggle-practice-mini).
+- Barrido de duplicados: ningún canal registrado 2×.
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 30. Fix: la app se ocultaba a los 3s de arrancar (2026-11-21)
+
+- Al añadir el indicador de Tekken (ronda 26) la condición del auto-hide
+  quedó mal: `else if (!isRunning)` escondía la ventana en cada chequeo
+  cuando Tekken no estaba abierto — incluso recién arrancada en dev
+  (comportamiento original: solo se ocultaba al pasar de juego-abierto a
+  juego-cerrado).
+- Ahora se oculta solo si estaba visible por el juego
+  (`!isRunning && tekkenRunningShown`), restaurando el comportamiento y
+  conservando el indicador y el re-arme por sesión.
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 31. Sistema de temas completos (2026-11-21)
+
+- De 5 acentos sueltos a 4 TEMAS COMPLETOS con personalidad (acento + tinte
+  de fondo propio): Dorado clásico, Azul eléctrico, Rojo Tekken, Verde jade.
+  Definidos como paletas CSS en html[data-theme] (--accent-color,
+  --accent-rgb, --bg-root); #root usa var(--bg-root).
+- Tailwind: overlay-accent ahora usa rgb(var(--accent-rgb) / <alpha-value>),
+  así los modificadores /15, /20… componen transparencias reales por tema
+  (antes el var plano no admitía alpha).
+- 'rosa' (tema antiguo) se mapea a 'dorado' al cargar (normalizeTheme).
+- Selector en la barra superior ahora con nombres localizados
+  (sección themes en es/en/pt).
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 32. Barrida de conflictos y limpieza (2026-11-21)
+
+- **Paridad IPC completa:** todo canal de preload tiene handler en main y
+  viceversa. Eliminado `set-ignore-mouse` (handler sin cliente, resto del
+  candado antiguo reemplazado por set-click-through-hover).
+- **Exports sin uso:** PORTRAITS y RANK_ART pasaron a internos de
+  bannerAssets.ts (se consumen vía bannerPortrait/bannerRankArt).
+- **Claves de idioma:** podadas 30+ claves muertas (app.search_*, actions.*,
+  rank.* entero, hotkeys.title/…, tips.no_id, labels.practice_mode,
+  help.hotkey_f1). Se conservaron filters.tags.* (uso dinámico) y
+  compact_list_hint, que ahora se muestra en el tooltip del botón ▤/≡.
+- Config de electron-builder limpio (solo out/**), sin módulos huérfanos,
+  sin CSS conflictivo, sin duplicados de IPC (barrido de la ronda 29).
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 33. Cinco mejoras finales para el lanzamiento (2026-11-21)
+
+1. **Paso a paso en la práctica:** botón ⏭ activa el modo; ←/→ (o los
+   ◀▶ del header) recorren los inputs del combo; el input actual se resalta
+   (anillo del acento), siguientes atenuados y auto-scroll al centro.
+   Cambiar de combo reinicia el paso. Hook keydown solo con stepMode.
+2. **Temporizador + racha:** la tira manda 1 heartbeat/seg; el main acumula
+   "práctica de hoy" y calcula racha (continúa solo si ayer se practicó),
+   escritura a disco cada 30 s. Header muestra ⏱ m:ss y 🔥 N (racha > 1).
+3. **Búsqueda global Ctrl+F:** modal con resultados del caché de todos los
+   personajes (notación/autor/etiqueta/nota, máx. 60). Enter abre el primer
+   resultado (navega al personaje + aplica el filtro de la búsqueda).
+   Botón 🔍 en la barra superior. Pref de sesión showGlobalSearch.
+4. **Respaldos desde Ayuda:** nueva sección que lista userData/backups
+   (fecha + KB) con botón Restaurar; restaura notes/learned/favorites/prefs
+   y re-aplica prefs + favoritos sin reiniciar. Nombre de archivo validado
+   (regex perfil-*.json) contra path traversal.
+5. **Frescura de caché en el grid:** puntito por personaje (verde <24 h,
+   ámbar <72 h, rojo si más) con tooltip; IPC get-cache-freshness + cache.
+   getAllCacheInfo.
+
+Claves nuevas: tips.{step_mode,practice_stats}, search.*, toasts.
+{backup_restored,backup_failed}, help.{backups,no_backups,restore},
+labels.{cache_fresh,cache_stale}.
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 34. Tres fixes del testeo (2026-11-21)
+
+1. **Barra superior saturada:** eliminada la etiqueta estática "F9"
+   (además engañosa: la tecla es reasignable), temas de vuelta a puntos de
+   color compactos (nombre completo en el tooltip del select), gap reducido.
+2. **Contador de progreso faltante (Roger Jr.):** causa raíz: se cacheaban
+   resultados VACÍOS (scrape sin combos) con timestamp fresco → puntito
+   verde y progreso sin datos, y el caché vacío bloqueaba el re-scrape.
+   Ahora: no se cachean listas vacías (fetch ni sync), getCachedCombos
+   trata entrada vacía como fallo y la purga, getAllCachedCombos las ignora,
+   y el grid re-consulta progreso/frescura al recuperar el foco.
+3. **Mando en paso a paso:** soporte Gamepad API en la tira (sondeo 80 ms
+   con detección de flanco): d-pad ←/→ (botones 14/15) o stick izquierdo.
+   En paso a paso mueve el input actual; fuera de él cambia de combo.
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 35. Fix: personajes duplicados en el grid tras Sync (2026-11-21)
+
+- Causa: el descubrimiento comparaba nombres de forma literal; la web
+  publica "Roger Jr" (sin punto) y el roster tiene "Roger Jr." → lo tomó
+  por personaje nuevo y lo duplicó.
+- Solución: normalizeCharName (insensible a mayúsculas/puntuación/espacios)
+  en types/combo.ts, usada por:
+  - normalizeDiscovered (descarta descubiertos equivalentes a roster y
+    duplicados internos — auto-repara datos legacy al leerse),
+  - el bucle de descubrimiento del Sync (comparación normalizada y persiste
+    SIEMPRE la lista normalizada, así se limpia 'Roger Jr' guardado),
+  - la dedupe del grid (gana el nombre del roster).
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 36. Fix: caché con claves variantes y entradas vacías (2026-11-21)
+
+- Diagnóstico con datos reales del disco (combo-cache.json):
+  - caché "Roger Jr" (sin punto, 28 combos) creado por un descubrimiento
+    legacy; el roster dice "Roger Jr." → progreso sin datos.
+  - "Yujiro Hanma" con entrada VACÍA (0 combos) y puntito de frescura
+    mentiroso (su scrape devuelve 0: se reportará en la lista de fallos).
+  - "Miary-Zo" y "Miary Zo" duplicadas en caché.
+- normalizeCharName ahora solo conserva letras/dígitos ("Miary-Zo" ≡
+  "Miary Zo" también).
+- migrateVariantCacheKeys: mueve los datos de la variante al nombre
+  canónico del roster (si este no tiene ya datos) y borra la variante.
+  Corrección clave: la comprobación de "ya canónico" se hace por nombre
+  EXACTO — con normalizado, "Roger Jr" parecía canónico de "Roger Jr."
+- El Sync trata scrape de 0 combos como fallo (failed + purga de la
+  entrada vacía); getAllCacheInfo no da puntito a entradas sin datos.
+- Migración verificada contra el archivo real: Roger Jr. 28 ✓,
+  Miary-Zo 30 ✓, 0 variantes, 44 entradas.
+
+Verificado: typecheck OK, 35/35 tests, build OK.
+
+## 37. Retirado: soporte de mando en la práctica (2026-11-21)
+
+- Eliminado el sondeo Gamepad API de PracticeView (d-pad/stick): quedan
+  teclado (←/→ en paso a paso, F6/F7 para combos) y los botones ◀▶.
+
+## 38. Preparación release 3.4.0 (2026-11-22)
+
+- Versión 3.4.0 en package.json.
+- **Fix de empaquetado importante:** package.json tenía un campo `build`
+  duplicado (sin filtro de archivos) que pisaba electron-builder.yml y
+  metía TODO el repo (src, assets fuente…) en el asar → instalador de
+  190 MB. Eliminado el campo; `publish` (GitHub) movido al .yml.
+  Nuevo instalador: 83.5 MB (-56 %), asar con solo out/** + package.json,
+  y la config NSIS del .yml ya se aplica (oneClick=false, carpeta elegible).
+- Artefactos en dist/: Setup-3.4.0.exe + .blockmap + latest.yml (auto-updater).
+- Creado CHECKLIST-3.4.0.md: estado verificado, pasos para publicar
+  (commit/tag/release de GitHub/assets de Discord), pruebas manuales y
+  notas de versión listas para copiar.
+
+Verificado: typecheck OK, 35/35 tests, build OK, dist OK.
+
+## 39. Fix: indicador de Tekken + slug corrupto (2026-11-22)
+
+- **Indicador 🟢 nunca activaba**: la detección filtraba tasklist por el
+  nombre exacto "TekkenGame-Win64-Shipping.exe", pero el proceso real del
+  juego es "TEKKEN 8.exe" (verificado en vivo con el juego abierto). La
+  detección ahora barre el listado completo de procesos y marca Tekken si
+  cualquier línea contiene "tekken" exceptuando el propio overlay.
+- **combos-[object Object]/ (HTTP 404)**: setCachedSlug usaba la notación
+  de puntos de electron-store; el PUNTO de "Roger Jr." creó un objeto
+  anidado { "": "roger-jr" } en el mapa de slugs. Al restaurar la última
+  vista, getCachedSlug devolvía ese objeto como slug. Arreglos: lectura
+  solo acepta strings, escritura sin dot-paths (objeto completo), y
+  repairSlugCache al arrancar purga valores corruptos y canoniza el roster.
+
+Verificado: typecheck OK, 35/35 tests, build OK, dist OK
+(detección de Tekken probada en vivo con el juego abierto).
+
+## 40. Retirado: modo paso a paso (2026-11-22)
+
+- Eliminado por decisión del proyecto: botón ⏭, estados stepMode/stepIdx,
+  navegación con flechas, resaltado de tokens, contador "Paso x/y",
+  efecto de auto-scroll y clave tips.step_mode (es/en/pt).
+- La tira conserva: drill ◀▶ + F6/F7, temporizador/racha, mini-tarjeta.
+- Instalador 3.4.0 regenerado.
+
+Verificado: typecheck OK, 35/35 tests, build OK, dist OK.
+
+## 41. Fix: YouTube Error 153 en la app empaquetada (2026-11-22)
+
+- Causa: en producción la ventana de vídeo cargaba por file:// → el iframe
+  de YouTube tenía origen nulo/opaco → "Error de configuración del
+  reproductor (Error 153)". En dev funcionaba porque el origen era
+  http://localhost:5173.
+- Solución: nuevo src/main/videoServer.ts — servidor HTTP local en
+  127.0.0.1 (puerto efímero) que sirve out/renderer (legible desde el asar).
+  La ventana de vídeo carga http://127.0.0.1:<port>/index.html?mode=video.
+  En dev sigue usando el servidor de Vite. openVideoWindow ahora async;
+  el servidor se detiene al cerrar la app.
+- Solo afecta a la ventana de vídeo; la tira de práctica sigue con loadFile.
+- Instalador 3.4.0 regenerado.
+
+Verificado: typecheck OK, 35/35 tests, build OK, dist OK.
+
+## 42. README actualizado para 3.4.0 (2026-11-22)
+
+- Reescrito: características organizadas por áreas (guía/personalización,
+  combos/práctica, progreso, overlay), controles ampliados (Ctrl+F,
+  Escape, atajos reasignables), versión en badge y la nota del arranque
+  oculto actualizada (la detección ya no es por nombre fijo del exe).
+- Corregidas referencias a cosas retiradas: tema "rosa" → 4 temas, y la
+  nota de scrapers de rango (playerScraper fue eliminado; el EWGF es
+  ahora un enlace externo).
+- Nueva sección "📸 Capturas" que enlaza 4 imágenes en docs/img/
+  (personajes, combos, práctica, progreso) con docs/img/LEEME.txt
+  explicando qué captura va en cada nombre.

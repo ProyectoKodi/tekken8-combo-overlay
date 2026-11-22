@@ -18,7 +18,10 @@ const SRC = path.join(ROOT, 'assets-src')
 const OUT = path.join(ROOT, 'src/renderer/assets/banner')
 
 /** Fondos elegidos a mano; el resto se queda en assets-src hasta que se pida --all. */
-const CURATED_BACKGROUNDS = ['banner-bg-3', 'banner-bg-4', 'banner-bg-17']
+const CURATED_BACKGROUNDS = [
+  'banner-bg-1', 'banner-bg-2', 'banner-bg-3', 'banner-bg-4', 'banner-bg-5',
+  'banner-bg-6', 'banner-bg-7', 'banner-bg-8', 'banner-bg-9', 'banner-bg-17',
+]
 
 const IMAGE_EXT = /\.(png|jpe?g|webp)$/i
 

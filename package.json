@@ -1,6 +1,6 @@
 {
   "name": "tekken8-combo-overlay",
-  "version": "3.3.1",
+  "version": "3.4.0",
   "description": "Tekken 8 Combo Overlay Pro (Ver. 3.3.1)",
   "author": "ProyectoKodi",
   "main": "out/main/index.js",
@@ -12,7 +12,8 @@
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "typecheck": "tsc -p tsconfig.web.json --noEmit --composite false && tsc -p tsconfig.node.json --noEmit --composite false",
-    "test": "node --test --test-isolation=none tests/comboHash.test.ts tests/notationParser.test.ts tests/bannerLookup.test.ts",
+    "test": "node --test --test-isolation=none tests/comboHash.test.ts tests/notationParser.test.ts tests/bannerLookup.test.ts tests/scraperFixture.test.ts",
+    "discord:assets": "node scripts/prepare-discord-assets.mjs",
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {
@@ -37,29 +38,6 @@
     "sharp": "^0.35.5",
     "tailwindcss": "^3.4.7",
     "typescript": "^5.5.3"
-  },
-  "build": {
-    "appId": "com.tekken8overlay.app",
-    "productName": "Tekken 8 Combo Overlay",
-    "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "ProyectoKodi",
-        "repo": "tekken8-combo-overlay"
-      }
-    ],
-    "extraResources": [
-      {
-        "from": "resources/yt-dlp.exe",
-        "to": "yt-dlp.exe"
-      }
-    ]
   },
   "allowScripts": {
     "electron@31.7.7": true,

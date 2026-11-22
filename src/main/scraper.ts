@@ -1,7 +1,7 @@
 import * as cheerio from 'cheerio'
 import type { AnyNode } from 'domhandler'
 import type { Combo } from '../renderer/types/combo'
-import { makeComboId } from '../shared/comboHash'
+import { makeComboId } from '../shared/comboHash.ts'
 
 const BASE_URL = 'https://tekken8combo.kagewebsite.com'
 
@@ -18,7 +18,8 @@ async function fetchPage(url: string): Promise<string> {
   return res.text()
 }
 
-function parseCombosFromHtml(html: string, character: string): Combo[] {
+/** Exportado para poder testearlo contra HTML real guardado como fixture. */
+export function parseCombosFromHtml(html: string, character: string): Combo[] {
   const $ = cheerio.load(html)
   const combos: Combo[] = []
 
@@ -111,6 +112,11 @@ function parseComboEntry(
   const noteEl = $el.find('.note, [class*="note"]').first()
   if (noteEl.length) notes = noteEl.text().trim()
 
+  // Vídeo del combo: YouTube enlazado/incrustado en la ficha del sitio
+  let source = ''
+  const $video = $el.find('a[href*="youtu"], iframe[src*="youtu"]').first()
+  if ($video.length) source = ($video.attr('href') || $video.attr('src') || '').trim()
+
   return {
     id: makeComboId(character, notation, creator),
     notation,
@@ -122,10 +128,12 @@ function parseComboEntry(
     notes,
     tags,
     character,
+    source,
   }
 }
 
-function extractNextPageUrl(html: string, currentUrl: string): string | null {
+/** Exportado para poder testearlo contra HTML real guardado como fixture. */
+export function extractNextPageUrl(html: string, currentUrl: string): string | null {
   const $ = cheerio.load(html)
 
   const pageMatch = currentUrl.match(/page=(\d+)/)
@@ -147,20 +155,18 @@ function extractNextPageUrl(html: string, currentUrl: string): string | null {
 export async function scrapeCharacterCombos(
   slug: string,
   character: string
-): Promise<{ combos: Combo[]; rawHtml: string }> {
+): Promise<Combo[]> {
   // Si por alguna razón llega sin nombre, lo deducimos del slug
   const charName = character || slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
   let allCombos: Combo[] = []
   let url = `${BASE_URL}/combos-${slug}/` // Usamos el slug para la URL
-  let firstHtml = ''
   let pageCount = 0
   const MAX_PAGES = 10
 
   while (url && pageCount < MAX_PAGES) {
     try {
       const html = await fetchPage(url)
-      if (pageCount === 0) firstHtml = html
 
       const pageCombos = parseCombosFromHtml(html, charName)
       allCombos = allCombos.concat(pageCombos)
@@ -178,5 +184,37 @@ export async function scrapeCharacterCombos(
 
   allCombos = allCombos.map((c) => ({ ...c, id: makeComboId(c.character, c.notation, c.creator) }))
 
-  return { combos: allCombos, rawHtml: firstHtml }
+  return allCombos
+}
+
+// -------------------------------------------------
+// Descubrimiento de personajes nuevos (DLC)
+// -------------------------------------------------
+
+export interface DiscoveredCharacter { name: string; slug: string }
+
+/** Extrae la lista { nombre, slug } del índice `all-combos` de la web. */
+export function extractCharacterLinks(html: string): DiscoveredCharacter[] {
+  const $ = cheerio.load(html)
+  const seen = new Set<string>()
+  const out: DiscoveredCharacter[] = []
+  $('a[href*="/combos-"]').each((_, el) => {
+    const href = $(el).attr('href') || ''
+    const match = href.match(/\/combos-([a-z0-9-]+)\/?$/)
+    if (!match) return
+    const slug = match[1]
+    if (seen.has(slug)) return
+    seen.add(slug)
+    // "Kazuya combos" -> "Kazuya"; si el texto no sirve, se deduce del slug
+    let name = $(el).text().replace(/combos?/gi, '').replace(/[^\p{L}\p{N}\- ']/gu, '').trim()
+    if (!name) name = slug.split('-').map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : '')).join(' ')
+    out.push({ name, slug })
+  })
+  return out
+}
+
+/** Baja el índice de la web y devuelve todos los personajes que publica. */
+export async function discoverCharacters(): Promise<DiscoveredCharacter[]> {
+  const html = await fetchPage(`${BASE_URL}/all-combos/`)
+  return extractCharacterLinks(html)
 }
