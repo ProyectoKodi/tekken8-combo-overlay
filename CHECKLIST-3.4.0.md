@@ -50,7 +50,7 @@ Fecha de build: 2026-11-22 · Rama: actual (todo sin commitear)
 - [ ] Primera apertura: onboarding de 3 pasos (una sola vez)
 - [ ] Sync de todos: sin duplicados en el grid; Roger Jr. 28; fallos listados
 - [ ] Cambio de tema (4) + modo OLED + lista compacta + sonido ✔ aprendido
-- [ ] Práctica: paso a paso con ←/→, temporizador ⏱, mini-tarjeta −/⤢
+- [ ] Práctica: F6/F7 drill, temporizador ⏱, mini-tarjeta −/⤢, vídeo 🎬 sin Error 153
 - [ ] Ctrl+F entre personajes; Mi rutina; compartir progreso (PNG)
 - [ ] Ayuda sin cortes; restaurar respaldo desde Ayuda
 - [ ] Candado 🔒 + zona segura; F8/F9/F3 reasignables desde Ayuda
